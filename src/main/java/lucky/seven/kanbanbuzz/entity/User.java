@@ -34,9 +34,9 @@ public class User extends Timestamped {
 	
 	private String refreshToken;
 	
-	//유저가 매니저인 보드
+/*	//유저가 매니저인 보드
 	@OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<Board> managerBoards = new HashSet<>();
+	private Set<Board> managerBoards = new HashSet<>();*/
 	
 	//유저가 속한 보드
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
