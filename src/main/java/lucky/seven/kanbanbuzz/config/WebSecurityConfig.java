@@ -3,15 +3,14 @@ package lucky.seven.kanbanbuzz.config;
 
 import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
+import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.repository.UserRepository;
-import lucky.seven.kanbanbuzz.security.AuthenticationFilter;
-import lucky.seven.kanbanbuzz.security.AuthorizationFilter;
-import lucky.seven.kanbanbuzz.security.JwtUtil;
-import lucky.seven.kanbanbuzz.security.UserDetailsServiceImpl;
+import lucky.seven.kanbanbuzz.security.*;
+import lucky.seven.kanbanbuzz.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,12 +23,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class WebSecurityConfig{
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    public WebSecurityConfig(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService, AuthenticationConfiguration authenticationConfiguration, UserRepository userRepository,@Lazy UserService userService) {
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+        this.authenticationConfiguration = authenticationConfiguration;
+        this.userRepository = userRepository;
+        this.userService = userService;
+    }
+
     private final AuthenticationConfiguration authenticationConfiguration;
     private final UserRepository userRepository;
+    private final UserService userService;
+
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -53,7 +62,10 @@ public class WebSecurityConfig{
         return new AuthorizationFilter(jwtUtil, userDetailsService);
     }
 
-
+    @Bean
+    public LogoutFilter logoutFilter(UserService userService,JwtUtil jwtUtil){
+        return new LogoutFilter(userService,jwtUtil);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -67,10 +79,10 @@ public class WebSecurityConfig{
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers("/api/user/**").permitAll()
+                        .requestMatchers("/api/user/login","/api/user/register").permitAll()
                         .anyRequest().authenticated()
         );
-
+        http.addFilterBefore(logoutFilter(userService,jwtUtil),AuthenticationFilter.class);
         http.addFilterBefore(authorizationFilter(), AuthenticationFilter.class);
         http.addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
