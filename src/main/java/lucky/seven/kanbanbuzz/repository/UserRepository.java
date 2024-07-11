@@ -1,12 +1,12 @@
 package lucky.seven.kanbanbuzz.repository;
 
-import java.util.Optional;
 import lucky.seven.kanbanbuzz.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface UserRepository extends JpaRepository<User, Long > {
+import java.util.Optional;
 
-    Optional<User> findByEmail(String userEmail);
-
-
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
 }
