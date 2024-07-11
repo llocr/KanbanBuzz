@@ -15,7 +15,9 @@ public enum ErrorType {
 	//user
 	DUPLICATE_ACCOUNT_ID(HttpStatus.LOCKED, "이미 아이디가 존재합니다."),
 	INVALID_ACCOUNT_ID(HttpStatus.UNAUTHORIZED, "아이디가 일치하지 않습니다."),
-	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
+	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
+	USER_ALREADY_EXISTS(HttpStatus.ALREADY_REPORTED,"이미 존재하는 이메일 입니다.")
+	;
 	
 	//board
 	
