@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.security.UserDetailsImpl;
@@ -34,6 +35,22 @@ public class CardController {
 		ResponseMessage<List<SortWithCardDto>> responseMessage = ResponseMessage.<List<SortWithCardDto>>builder()
 			.statusCode(HttpStatus.OK.value())
 			.message("전체 카드 조회가 완료되었습니다.")
+			.data(responseDto)
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
+	}
+	
+	@GetMapping("/{cardId}")
+	public ResponseEntity<ResponseMessage<CardDetailResponseDto>> getCardDetail(
+		@PathVariable Long boardId, @PathVariable Long cardId,
+		@AuthenticationPrincipal UserDetailsImpl userDetails) {
+		
+		CardDetailResponseDto responseDto = cardService.findSingleCard(boardId, cardId, userDetails.getUser());
+		
+		ResponseMessage<CardDetailResponseDto> responseMessage = ResponseMessage.<CardDetailResponseDto>builder()
+			.statusCode(HttpStatus.OK.value())
+			.message("단일 카드 조회가 완료되었습니다.")
 			.data(responseDto)
 			.build();
 		

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
 import lucky.seven.kanbanbuzz.dto.CardSimpleResponseDto;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.entity.Board;
@@ -91,6 +92,16 @@ public class CardService {
 			.collect(Collectors.toList());
 	}
 	
+	//카드 단일 조회
+	public CardDetailResponseDto findSingleCard(Long boardId, Long cardId, User user) {
+		checkUserBoardValidation(boardId, user);
+		
+		Card card = getSingleCard(boardId, cardId);
+		
+		return new CardDetailResponseDto(card);
+	}
+	
+	
 	//** UTIL **//
 
 	//유저가 보드에 속한 것인지 확인
@@ -111,5 +122,15 @@ public class CardService {
 		}
 		
 		return cardList;
+	}
+	
+	//cardId, boardId가 일치하는 Card
+	private Card getSingleCard(Long boardId, Long cardId) {
+		Optional<Card> card = cardRepository.findByIdWithUserBoardAndColumn(cardId, boardId);
+		if (card.isEmpty()) {
+			throw new CardException(ErrorType.NOT_FOUND_CARD);
+		}
+		
+		return card.get();
 	}
 }
