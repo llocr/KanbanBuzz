@@ -34,16 +34,12 @@ public class User extends Timestamped {
 	@Enumerated(value = EnumType.STRING)
 	private UserRole role;
 	
-	//유저가 매니저인 보드
-	@OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<Board> managerBoards = new HashSet<>();
-	
 	//유저가 속한 보드
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<UserBoard> userBoards = new HashSet<>();
 	
 	//유저가 작업할 카드
-	@OneToMany(mappedBy = "worker", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Card> userCards = new HashSet<>();
 	
 	//유저가 작성한 댓글
