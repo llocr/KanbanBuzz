@@ -16,14 +16,19 @@ public enum ErrorType {
 	DUPLICATE_ACCOUNT_ID(HttpStatus.LOCKED, "이미 아이디가 존재합니다."),
 	INVALID_ACCOUNT_ID(HttpStatus.UNAUTHORIZED, "아이디가 일치하지 않습니다."),
 	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
-	USER_ALREADY_EXISTS(HttpStatus.ALREADY_REPORTED,"이미 존재하는 이메일 입니다.")
-	;
+	USER_ALREADY_EXISTS(HttpStatus.ALREADY_REPORTED,"이미 존재하는 이메일 입니다."),
+	USER_NOT_IN_BOARD(HttpStatus.BAD_REQUEST, "속하지 않은 보드입니다"),
 	
 	//board
+	NOT_FOUND_BOARD(HttpStatus.NOT_FOUND, "보드가 존재하지 않습니다."),
 	
 	//column
+	NOT_FOUND_COLUMN(HttpStatus.NOT_FOUND, "컬럼이 존재하지 않습니다."),
 	
 	//card
+	INVALID_CARD_USER(HttpStatus.UNAUTHORIZED, "작성자가 일치하지 않습니다."),
+	NOT_FOUND_CARD(HttpStatus.NOT_FOUND, "카드가 존재하지 않습니다."),
+	INVALID_SORT(HttpStatus.BAD_REQUEST, "정렬 방식이 올바르지 않습니다.");
 	
 	//comment
 	
