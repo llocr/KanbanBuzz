@@ -16,7 +16,8 @@ public enum ErrorType {
 
 	//board
 	NOT_FOUND_USER(HttpStatus.NOT_FOUND, "존재하지 하지 않는 사용자입니다."),
-	NOT_FOUND_BOARD(HttpStatus.NOT_FOUND, "해당 게시글은 존재하지 않습니다.");
+	NOT_FOUND_BOARD(HttpStatus.NOT_FOUND, "해당 게시글은 존재하지 않습니다."),
+	NOT_AUTHORIZED_BOARD(HttpStatus.UNAUTHORIZED, "권한이 없습니다.");
 	//column
 	
 	//card
