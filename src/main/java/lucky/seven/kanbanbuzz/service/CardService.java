@@ -168,6 +168,20 @@ public class CardService {
 		return new CardDetailResponseDto(updatedCard);
 	}
 	
+	//카드 삭제
+	@Transactional
+	public Long deleteCard(Long boardId, Long cardId, User user) {
+		Card card = getSingleCard(boardId, cardId);
+		
+		if(user.getRole() != UserRole.ROLE_MANAGER) {
+			checkUserCardValidation(card.getId(), user);
+		}
+		
+		cardRepository.delete(card);
+		
+		return card.getId();
+	}
+	
 	//** UTIL **//
 
 	//유저가 보드에 속한 것인지 확인

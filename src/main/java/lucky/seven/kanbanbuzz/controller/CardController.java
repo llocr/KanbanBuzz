@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +92,22 @@ public class CardController {
 			.statusCode(HttpStatus.OK.value())
 			.message("카드 수정이 완료되었습니다.")
 			.data(responseDto)
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
+	}
+	
+	@DeleteMapping("/{cardId}")
+	public ResponseEntity<ResponseMessage<Long>> deleteCard(
+		@PathVariable Long boardId, @PathVariable Long cardId,
+		@AuthenticationPrincipal UserDetailsImpl userDetails) {
+		
+		Long id = cardService.deleteCard(boardId, cardId, userDetails.getUser());
+		
+		ResponseMessage<Long> responseMessage = ResponseMessage.<Long>builder()
+			.statusCode(HttpStatus.OK.value())
+			.message("카드 삭제가 완료되었습니다.")
+			.data(id)
 			.build();
 		
 		return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
