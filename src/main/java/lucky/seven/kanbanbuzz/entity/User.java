@@ -5,13 +5,13 @@ import java.util.Set;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Column;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
 @Table(name = "users")
 @NoArgsConstructor
 public class User extends Timestamped {
@@ -57,5 +57,12 @@ public class User extends Timestamped {
 	public boolean validateRefreshToken(String refreshToken){
 		return this.refreshToken != null && this.refreshToken.equals(refreshToken);
 	}
-
+	@Builder
+	public User(String email, String password, String name, String refreshToken, UserRole role) {
+		this.email = email;
+		this.password = password;
+		this.name = name;
+		this.refreshToken = refreshToken;
+		this.role = role;
+	}
 }
