@@ -15,7 +15,7 @@ public enum ErrorType {
 	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 
 	//board
-	NOT_FOUND_USER(HttpStatus.NOT_FOUND, "로그인 하지 않은 사용자입니다."),
+	NOT_FOUND_USER(HttpStatus.NOT_FOUND, "존재하지 하지 않는 사용자입니다."),
 	NOT_FOUND_BOARD(HttpStatus.NOT_FOUND, "해당 게시글은 존재하지 않습니다.");
 	//column
 	

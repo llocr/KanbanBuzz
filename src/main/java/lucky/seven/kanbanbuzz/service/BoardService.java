@@ -1,14 +1,19 @@
 package lucky.seven.kanbanbuzz.service;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 import lucky.seven.kanbanbuzz.dto.BoardResponseDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.entity.Board;
+import lucky.seven.kanbanbuzz.entity.User;
+import lucky.seven.kanbanbuzz.entity.UserBoard;
 import lucky.seven.kanbanbuzz.exception.BoardException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.repository.BoardRepository;
+import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
+import lucky.seven.kanbanbuzz.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class BoardService {
 
     private final BoardRepository boardRepository;
+    private final UserBoardRepository userBoardRepository;
+    private final UserRepository userRepository;
 
     //TODO
     // 공통적으로 나중에 User 검증 추가
@@ -49,9 +56,8 @@ public class BoardService {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
 
-        //if(board == null) 예외처리
-
         BoardResponseDto responseDto = BoardResponseDto.from(board);
+
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResponseMessage.<BoardResponseDto>builder().data(responseDto).build());
     }
@@ -65,6 +71,7 @@ public class BoardService {
 
         board.update(requestDto);
         BoardResponseDto responseDto = BoardResponseDto.from(board);
+
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ResponseMessage.<BoardResponseDto>builder().data(responseDto).build());
     }
@@ -76,5 +83,27 @@ public class BoardService {
 
         boardRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK).body(id + "번째 board 삭제 완료.");
+    }
+
+    @Transactional
+    public ResponseEntity<String> inviteUser(Long id, String userEmail) {
+        Board board = boardRepository.findById(id).orElseThrow();
+        Optional<UserBoard> userBoardOptional = userBoardRepository.findByUserEmail(userEmail);
+
+        // 이미 초대 된 사용자를 초대 한 경우
+        if (userBoardOptional.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("해당 사용자는 이미 초대 되어 있습니다.");
+        } else {
+            User user = userRepository.findByEmail(userEmail).orElseThrow(
+                    () -> new BoardException(ErrorType.NOT_FOUND_USER)
+            );
+
+            UserBoard userBoard = UserBoard.builder()
+                    .user(user).board(board).build();
+
+            userBoardRepository.save(userBoard);
+            return ResponseEntity.status(HttpStatus.OK).body(userEmail + " 사용자를 초대 완료하였습니다.");
+        }
+
     }
 }
