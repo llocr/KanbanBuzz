@@ -13,11 +13,13 @@ public enum ErrorType {
 	//user
 	DUPLICATE_ACCOUNT_ID(HttpStatus.LOCKED, "이미 아이디가 존재합니다."),
 	INVALID_ACCOUNT_ID(HttpStatus.UNAUTHORIZED, "아이디가 일치하지 않습니다."),
-	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
+	INVALID_PASSWORD(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
 	
 	//board
 	
 	//column
+	DUPLICATE_STATUS_NAME(HttpStatus.LOCKED, "이미 존재하는 컬럼명입니다."),
+	INVALID_COLUMN(HttpStatus.NOT_FOUND, "해당 칼럼이 존재하지 않습니다.");
 	
 	//card
 	
