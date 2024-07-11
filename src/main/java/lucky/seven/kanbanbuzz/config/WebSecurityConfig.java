@@ -63,8 +63,8 @@ public class WebSecurityConfig{
     }
 
     @Bean
-    public LogoutFilter logoutFilter(UserService userService){
-        return new LogoutFilter(userService);
+    public LogoutFilter logoutFilter(UserService userService,JwtUtil jwtUtil){
+        return new LogoutFilter(userService,jwtUtil);
     }
 
     @Bean
@@ -82,7 +82,7 @@ public class WebSecurityConfig{
                         .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()
         );
-        http.addFilterBefore(logoutFilter(userService),AuthenticationFilter.class);
+        http.addFilterBefore(logoutFilter(userService,jwtUtil),AuthenticationFilter.class);
         http.addFilterBefore(authorizationFilter(), AuthenticationFilter.class);
         http.addFilterBefore(authenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
