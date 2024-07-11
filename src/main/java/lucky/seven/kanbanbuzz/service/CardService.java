@@ -14,12 +14,14 @@ import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
 import lucky.seven.kanbanbuzz.dto.CardRequestDto;
 import lucky.seven.kanbanbuzz.dto.CardSimpleResponseDto;
+import lucky.seven.kanbanbuzz.dto.CardUpdateDto;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.entity.Board;
 import lucky.seven.kanbanbuzz.entity.Card;
 import lucky.seven.kanbanbuzz.entity.Column;
 import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.entity.UserBoard;
+import lucky.seven.kanbanbuzz.entity.UserRole;
 import lucky.seven.kanbanbuzz.exception.CardException;
 import lucky.seven.kanbanbuzz.exception.ColumnException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
@@ -130,6 +132,41 @@ public class CardService {
 		return saveCard.getId();
 	}
 	
+	//카드 수정
+	@Transactional
+	public CardDetailResponseDto updateCard(Long boardId, Long cardId, CardUpdateDto requestDto, User user) {
+		//카드가 존재하는지 확인
+		Card card = getSingleCard(boardId, cardId);
+		
+		//유저가 작성한 카드가 맞는지 확인
+		if(user.getRole() != UserRole.ROLE_MANAGER) {
+			checkUserCardValidation(card.getId(), user);
+		}
+		
+		Card.CardBuilder cardBuilder = card.toBuilder();
+		
+		if(requestDto.getColumnId() != null) {
+			Column column = getColumn(boardId, requestDto.getColumnId());
+			cardBuilder.column(column);
+		}
+		
+		if (requestDto.getTitle() != null) {
+			cardBuilder.title(requestDto.getTitle());
+		}
+		
+		if(requestDto.getEndDate() != null) {
+			cardBuilder.endDate(LocalDate.parse(requestDto.getEndDate()));
+		}
+		
+		if(requestDto.getContents() != null) {
+			cardBuilder.contents(requestDto.getContents());
+		}
+		
+		Card updatedCard = cardBuilder.build();
+		cardRepository.save(updatedCard);
+		
+		return new CardDetailResponseDto(updatedCard);
+	}
 	
 	//** UTIL **//
 
@@ -171,5 +208,14 @@ public class CardService {
 		}
 		
 		return column.get();
+	}
+	
+	//유저가 작성한 카드인지 확인
+	private void checkUserCardValidation(Long cardId, User user) {
+		Optional<Card> card = cardRepository.findByIdAndUserId(cardId, user.getId());
+		
+		if (card.isEmpty()) {
+			throw new CardException(ErrorType.INVALID_CARD_USER);
+		}
 	}
 }

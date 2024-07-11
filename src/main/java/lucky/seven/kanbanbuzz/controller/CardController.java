@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
 import lucky.seven.kanbanbuzz.dto.CardRequestDto;
+import lucky.seven.kanbanbuzz.dto.CardUpdateDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.security.UserDetailsImpl;
@@ -75,5 +77,22 @@ public class CardController {
 			.build();
 		
 		return ResponseEntity.status(HttpStatus.CREATED).body(responseMessage);
+	}
+	
+	@PutMapping("/{cardId}")
+	public ResponseEntity<ResponseMessage<CardDetailResponseDto>> updateCard(
+		@PathVariable Long boardId, @PathVariable Long cardId,
+		@RequestBody CardUpdateDto cardRequestDto,
+		@AuthenticationPrincipal UserDetailsImpl userDetails) {
+		
+		CardDetailResponseDto responseDto = cardService.updateCard(boardId, cardId, cardRequestDto, userDetails.getUser());
+		
+		ResponseMessage<CardDetailResponseDto> responseMessage = ResponseMessage.<CardDetailResponseDto>builder()
+			.statusCode(HttpStatus.OK.value())
+			.message("카드 수정이 완료되었습니다.")
+			.data(responseDto)
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
 	}
 }
