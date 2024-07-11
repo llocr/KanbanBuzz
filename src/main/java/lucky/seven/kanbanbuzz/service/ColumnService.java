@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lucky.seven.kanbanbuzz.dto.ColumnRequestDto;
 import lucky.seven.kanbanbuzz.dto.ColumnResponseDto;
+import lucky.seven.kanbanbuzz.entity.Board;
 import lucky.seven.kanbanbuzz.entity.Column;
 import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.entity.UserRole;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
+import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.ColumnRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +23,7 @@ import java.util.List;
 public class ColumnService {
 
     private final ColumnRepository columnRepository;
-//    private final BoardRepository boardRepository;
+    private final BoardRepository boardRepository;
 
     /**
      * 컬럼 생성
@@ -32,7 +34,8 @@ public class ColumnService {
     @Transactional
     public ColumnResponseDto addColumn(Long boardId, ColumnRequestDto requestDto, User user) {
 
-        findAndCheckUser(user);
+        checkUser(user);
+        Board findBoard = findBoardById(boardId);
 
         if(findColumn(boardId, requestDto.getStatusName())) {
             throw new UserException(ErrorType.DUPLICATE_STATUS_NAME);
@@ -40,7 +43,7 @@ public class ColumnService {
 
         Long sort = columnRepository.countByBoardId(boardId) + 1L;
 
-        Column column = Column.saveColumn(requestDto, sort);
+        Column column = Column.saveColumn(findBoard, requestDto, sort);
         columnRepository.save(column);
 
         return ColumnResponseDto.of(column);
@@ -54,7 +57,8 @@ public class ColumnService {
     @Transactional
     public void deleteColumn(Long boardId, Long columnId, User user) {
 
-        findAndCheckUser(user);
+        checkUser(user);
+        Board findBoard = findBoardById(boardId);
 
         if(columnRepository.findById(columnId).isEmpty()) {
             throw new UserException(ErrorType.INVALID_COLUMN);
@@ -71,7 +75,8 @@ public class ColumnService {
     @Transactional
     public void reorderColumns(Long boardId, Long[] id, User user) {
 
-        findAndCheckUser(user);
+        checkUser(user);
+        Board findBoard = findBoardById(boardId);
 
         Long count = 1L;
         Column column;
@@ -90,6 +95,8 @@ public class ColumnService {
      */
     @Transactional
     public List<ColumnResponseDto> queryColumns(Long boardId) {
+
+        Board findBoard = findBoardById(boardId);
         return columnRepository.findAllByBoardIdOrderBySortingAsc(boardId);
     }
 
@@ -100,24 +107,37 @@ public class ColumnService {
      * @return
      */
     private boolean findColumn(Long boardId, String statusName) {
-        Column column = columnRepository.findByStatusName(statusName)
-                .orElseThrow(() -> new UserException(ErrorType.INVALID_COLUMN));
+        List<Column> columns = columnRepository.findByStatusName(statusName);
 
-        return column.getBoard().getId().equals(boardId);
+        if(columns.isEmpty()) {
+            return false;
+        }
+
+        for(Column column : columns) {
+            if(column.getBoard().getId().equals(boardId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-//    private Board findBoard(Long boardId) {
-//        return boardRepository.findById(boardId)
-//                .orElseThrow(() -> new UserException(ErrorType.DUPLICATE_STATUS_NAME));
-//    }
+    /**
+     * 해당 아이디를 가진 보드가 존재하는지 확인
+     * @param boardId
+     * @return
+     */
+    private Board findBoardById(Long boardId) {
+        return boardRepository.findById(boardId)
+                .orElseThrow(() -> new UserException(ErrorType.NOT_FOUND_BOARD));
+    }
 
     /**
      * 사용자가 manager인지 확인
      * @param user
      */
-    private void findAndCheckUser(User user) {
+    private void checkUser(User user) {
         if(!user.getRole().equals(UserRole.ROLE_MANAGER)) {
-            throw new UserException(ErrorType.DUPLICATE_ACCOUNT_ID);
+            throw new UserException(ErrorType.NOT_AUTHORIZED_BOARD);
         }
     }
 }

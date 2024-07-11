@@ -41,9 +41,10 @@ public class Column {
 	}
 
 	@Builder
-	public static Column saveColumn(ColumnRequestDto requestDto, Long sort) {
+	public static Column saveColumn(Board board, ColumnRequestDto requestDto, Long sort) {
 		return Column.builder()
 				.statusName(requestDto.getStatusName())
+				.board(board)
 				.sorting(sort)
 				.build();
 	}

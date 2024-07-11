@@ -55,9 +55,20 @@ public class ColumnController {
     ) {
         columnService.deleteColumn(boardId, columnId, userDetails.getUser());
 
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+        ResponseMessage<Void> responseMessage = ResponseMessage
+                .<Void>builder().statusCode(HttpStatus.OK.value())
+                .message("컬럼이 삭제되었습니다.").data(null).build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }
 
+    /**
+     * 컬럼 정렬
+     * @param boardId
+     * @param id
+     * @param userDetails
+     * @return
+     */
     @PostMapping("/{boardId}/columns/reorder")
     public ResponseEntity<ResponseMessage<Void>> columnsReorder(
             @PathVariable Long boardId, @RequestParam("id[]") Long[] id,

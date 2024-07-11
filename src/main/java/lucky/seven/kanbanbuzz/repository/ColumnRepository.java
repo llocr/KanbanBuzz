@@ -8,9 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ColumnRepository extends JpaRepository<Column, Long> {
-    Optional<Column> findByStatusName(String statusName);
 
     List<ColumnResponseDto> findAllByBoardIdOrderBySortingAsc(Long boardId);
 
     Long countByBoardId(Long boardId);
+
+    List<Column> findByStatusName(String statusName);
 }
