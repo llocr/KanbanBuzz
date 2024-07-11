@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import lucky.seven.kanbanbuzz.dto.ColumnRequestDto;
 import lucky.seven.kanbanbuzz.dto.ColumnResponseDto;
 import lucky.seven.kanbanbuzz.entity.Column;
+import lucky.seven.kanbanbuzz.entity.User;
+import lucky.seven.kanbanbuzz.entity.UserRole;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
 import lucky.seven.kanbanbuzz.repository.ColumnRepository;
@@ -28,7 +30,9 @@ public class ColumnService {
      * @return
      */
     @Transactional
-    public ColumnResponseDto addColumn(Long boardId, ColumnRequestDto requestDto) {
+    public ColumnResponseDto addColumn(Long boardId, ColumnRequestDto requestDto, User user) {
+
+        findAndCheckUser(user);
 
         if(findColumn(boardId, requestDto.getStatusName())) {
             throw new UserException(ErrorType.DUPLICATE_STATUS_NAME);
@@ -48,7 +52,10 @@ public class ColumnService {
      * @param columnId
      */
     @Transactional
-    public void deleteColumn(Long boardId, Long columnId) {
+    public void deleteColumn(Long boardId, Long columnId, User user) {
+
+        findAndCheckUser(user);
+
         if(columnRepository.findById(columnId).isEmpty()) {
             throw new UserException(ErrorType.INVALID_COLUMN);
         }
@@ -61,7 +68,11 @@ public class ColumnService {
      * @param boardId
      * @param id
      */
-    public void reorderColumns(Long boardId, Long[] id) {
+    @Transactional
+    public void reorderColumns(Long boardId, Long[] id, User user) {
+
+        findAndCheckUser(user);
+
         Long count = 1L;
         Column column;
 
@@ -73,10 +84,11 @@ public class ColumnService {
     }
 
     /**
-     * 정렬된 컬럼 반환
+     * 특정 보드의 컬럼을 정렬하여 반환
      * @param boardId
      * @return
      */
+    @Transactional
     public List<ColumnResponseDto> queryColumns(Long boardId) {
         return columnRepository.findAllByBoardIdOrderBySortingAsc(boardId);
     }
@@ -99,10 +111,13 @@ public class ColumnService {
 //                .orElseThrow(() -> new UserException(ErrorType.DUPLICATE_STATUS_NAME));
 //    }
 
-//    private void findAndCheckUser(User user) {
-//
-//        if(!user.getUserStatus().equals("MANAGER")) {
-//            throw new UserException(ErrorType.DUPLICATE_ACCOUNT_ID);
-//        }
-//    }
+    /**
+     * 사용자가 manager인지 확인
+     * @param user
+     */
+    private void findAndCheckUser(User user) {
+        if(!user.getRole().equals(UserRole.ROLE_MANAGER)) {
+            throw new UserException(ErrorType.DUPLICATE_ACCOUNT_ID);
+        }
+    }
 }

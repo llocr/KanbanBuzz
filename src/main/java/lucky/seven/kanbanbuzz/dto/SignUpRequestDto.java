@@ -1,9 +1,6 @@
 package lucky.seven.kanbanbuzz.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 
 @Getter
@@ -19,6 +16,6 @@ public class SignUpRequestDto {
     private String password;
     @NotBlank(message = "이름은 필수 입력 값입니다.")
     private String name;
-    @NotBlank(message = "유저 분류는 필수 입니다.")
+    @NotNull(message = "유저 분류는 필수 입니다.")
     private boolean manager;
 }

@@ -1,16 +1,18 @@
 package lucky.seven.kanbanbuzz.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lucky.seven.kanbanbuzz.dto.ColumnRequestDto;
 import lucky.seven.kanbanbuzz.dto.ColumnResponseDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
+import lucky.seven.kanbanbuzz.security.UserDetailsImpl;
 import lucky.seven.kanbanbuzz.service.ColumnService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -28,10 +30,10 @@ public class ColumnController {
      */
     @PostMapping("/{boardId}/columns")
     public ResponseEntity<ResponseMessage<ColumnResponseDto>> columnAdd(
-            @PathVariable Long boardId, @RequestBody ColumnRequestDto requestDto
-            //@AuthenticationPrincipal UserDetailsImpl userDetails
+            @PathVariable Long boardId, @Valid @RequestBody ColumnRequestDto requestDto,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        ColumnResponseDto responseDto = columnService.addColumn(boardId, requestDto);
+        ColumnResponseDto responseDto = columnService.addColumn(boardId, requestDto, userDetails.getUser());
 
         ResponseMessage<ColumnResponseDto> responseMessage = ResponseMessage
                 .<ColumnResponseDto>builder().statusCode(HttpStatus.CREATED.value())
@@ -48,23 +50,20 @@ public class ColumnController {
      */
     @DeleteMapping("/{boardId}/columns/{columnId}")
     public ResponseEntity<ResponseMessage<Void>> columnDelete(
-            @PathVariable Long boardId, @PathVariable Long columnId
-            //@AuthenticationPrincipal UserDetailsImpl userDetails
+            @PathVariable Long boardId, @PathVariable Long columnId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        columnService.deleteColumn(boardId, columnId);
+        columnService.deleteColumn(boardId, columnId, userDetails.getUser());
 
         return ResponseEntity.status(HttpStatus.OK).body(null);
     }
 
     @PostMapping("/{boardId}/columns/reorder")
     public ResponseEntity<ResponseMessage<Void>> columnsReorder(
-            @PathVariable Long boardId, @RequestParam("id[]") Long[] id
-            //@AuthenticationPrincipal UserDetailsImpl userDetails
+            @PathVariable Long boardId, @RequestParam("id[]") Long[] id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        columnService.reorderColumns(boardId, id);
-
-        // 이 부분을 보드 단일 조회에 사용, 재정렬은 반환 데이터 없음으로 함.
-        List<ColumnResponseDto> list = columnService.queryColumns(boardId);
+        columnService.reorderColumns(boardId, id, userDetails.getUser());
 
         ResponseMessage<Void> responseMessage = ResponseMessage
                 .<Void>builder().statusCode(HttpStatus.OK.value())
