@@ -24,7 +24,7 @@ public class LogoutFilter extends OncePerRequestFilter {
     }
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if("/api/logout".equals(request.getRequestURI()) && "POST".equalsIgnoreCase(request.getMethod())){
+        if("/api/user/logout".equals(request.getRequestURI()) && "POST".equalsIgnoreCase(request.getMethod())){
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if(auth!=null){
                 new SecurityContextLogoutHandler().logout(request,response,auth);

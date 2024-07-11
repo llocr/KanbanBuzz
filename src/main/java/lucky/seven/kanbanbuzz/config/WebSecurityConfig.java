@@ -79,7 +79,7 @@ public class WebSecurityConfig{
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers("/api/user/**").permitAll()
+                        .requestMatchers("/api/user/login","/api/user/register").permitAll()
                         .anyRequest().authenticated()
         );
         http.addFilterBefore(logoutFilter(userService,jwtUtil),AuthenticationFilter.class);
