@@ -1,8 +1,5 @@
 package lucky.seven.kanbanbuzz.entity;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,8 +7,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 
 @Entity
 @Getter
@@ -37,4 +38,15 @@ public class Board extends Timestamped {
 	//보드에 속한 카드
 	@OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<Card> cards = new HashSet<>();
+	
+    @Builder
+    public Board(BoardRequestDto requestDto) {
+        this.name = requestDto.getName();
+        this.bio = requestDto.getBio();
+    }
+
+    public void update(BoardRequestDto requestDto) {
+        this.name = requestDto.getName();
+        this.bio = requestDto.getBio();
+    }
 }
