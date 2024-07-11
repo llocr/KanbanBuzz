@@ -18,4 +18,6 @@ public class SignUpRequestDto {
     private String name;
     @NotNull(message = "유저 분류는 필수 입니다.")
     private boolean manager;
+
+    private boolean manager = false;
 }
