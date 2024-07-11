@@ -9,11 +9,13 @@ import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.entity.Board;
 import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.entity.UserBoard;
+import lucky.seven.kanbanbuzz.entity.UserRole;
 import lucky.seven.kanbanbuzz.exception.BoardException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserRepository;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,10 @@ public class BoardService {
         return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }
 
-    public ResponseEntity<String> createBoard(BoardRequestDto request) {
+    public ResponseEntity<String> createBoard(User user, BoardRequestDto request) {
+        if(user.getRole() == UserRole.ROLE_USER){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("글을 작성 할 권한이 없습니다.");
+        }
         boardRepository.save(Board.builder().requestDto(request).build());
         return ResponseEntity.status(HttpStatus.OK).body("등록 완료");
     }
@@ -59,25 +64,46 @@ public class BoardService {
         BoardResponseDto responseDto = BoardResponseDto.from(board);
 
         return ResponseEntity.status(HttpStatus.OK).body(
-                ResponseMessage.<BoardResponseDto>builder().data(responseDto).build());
+                ResponseMessage.<BoardResponseDto>builder().
+                        statusCode(200).
+                        message("단일 조회 완료").
+                        data(responseDto).build());
     }
 
     @Transactional
-    public ResponseEntity<ResponseMessage<BoardResponseDto>> updateBoard(Long id,
+    public ResponseEntity<ResponseMessage<BoardResponseDto>> updateBoard(User user, Long id,
             BoardRequestDto requestDto) {
 
+        
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
+
+        if(user.getRole() == UserRole.ROLE_USER){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ResponseMessage.<BoardResponseDto>builder().
+                            statusCode(401).
+                            message("글을 수정 할 권한이 없습니다.")
+                            .build()
+                    );
+        }
 
         board.update(requestDto);
         BoardResponseDto responseDto = BoardResponseDto.from(board);
 
         return ResponseEntity.status(HttpStatus.OK)
-                .body(ResponseMessage.<BoardResponseDto>builder().data(responseDto).build());
+                .body(ResponseMessage.<BoardResponseDto>builder().
+                        statusCode(200).
+                        message("수정 완료").
+                        data(responseDto).build());
     }
 
     @Transactional
-    public ResponseEntity<String> deleteBoard(Long id) {
+    public ResponseEntity<String> deleteBoard(User user , Long id) {
+
+        if(user.getRole() == UserRole.ROLE_USER){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("삭제 할 권한이 없습니다.");
+        }
+
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
 
@@ -86,7 +112,12 @@ public class BoardService {
     }
 
     @Transactional
-    public ResponseEntity<String> inviteUser(Long id, String userEmail) {
+    public ResponseEntity<String> inviteUser(User user, Long id, String userEmail) {
+
+        if(user.getRole() == UserRole.ROLE_USER){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("초대 권한이 없습니다.");
+        }
+
         Board board = boardRepository.findById(id).orElseThrow();
         Optional<UserBoard> userBoardOptional = userBoardRepository.findByUserEmail(userEmail);
 
@@ -94,12 +125,20 @@ public class BoardService {
         if (userBoardOptional.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("해당 사용자는 이미 초대 되어 있습니다.");
         } else {
-            User user = userRepository.findByEmail(userEmail).orElseThrow(
+            User invitedUser = userRepository.findByEmail(userEmail).orElseThrow(
                     () -> new BoardException(ErrorType.NOT_FOUND_USER)
             );
 
+            // 해당 유저 role 변경 후 저장
+            User changedUser = User.builder().email(invitedUser.getEmail())
+                    .password(invitedUser.getPassword())
+                    .name(invitedUser.getName())
+                    .refreshToken(invitedUser.getRefreshToken())
+                    .role(UserRole.ROLE_MANAGER)
+                    .build();
+
             UserBoard userBoard = UserBoard.builder()
-                    .user(user).board(board).build();
+                    .user(changedUser).board(board).build();
 
             userBoardRepository.save(userBoard);
             return ResponseEntity.status(HttpStatus.OK).body(userEmail + " 사용자를 초대 완료하였습니다.");
