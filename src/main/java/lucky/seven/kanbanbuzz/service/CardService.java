@@ -1,5 +1,6 @@
 package lucky.seven.kanbanbuzz.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
+import lucky.seven.kanbanbuzz.dto.CardRequestDto;
 import lucky.seven.kanbanbuzz.dto.CardSimpleResponseDto;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.entity.Board;
@@ -19,6 +21,7 @@ import lucky.seven.kanbanbuzz.entity.Column;
 import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.entity.UserBoard;
 import lucky.seven.kanbanbuzz.exception.CardException;
+import lucky.seven.kanbanbuzz.exception.ColumnException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
 import lucky.seven.kanbanbuzz.repository.CardRepository;
@@ -101,6 +104,32 @@ public class CardService {
 		return new CardDetailResponseDto(card);
 	}
 	
+	//카드 저장
+	@Transactional
+	public Long saveCard(Long boardId, CardRequestDto requestDto, User user) {
+		Board board = checkUserBoardValidation(boardId, user);
+		Column column = getColumn(boardId, requestDto.getColumnId());
+		
+		Card.CardBuilder cardBuilder = Card.builder()
+			.title(requestDto.getTitle())
+			.board(board)
+			.column(column)
+			.user(user);
+		
+		if (requestDto.getContents() != null) {
+			cardBuilder.contents(requestDto.getContents());
+		}
+		
+		if (requestDto.getEndDate() != null) {
+			cardBuilder.endDate(LocalDate.parse(requestDto.getEndDate()));
+		}
+		
+		Card buildCard = cardBuilder.build();
+		Card saveCard = cardRepository.save(buildCard);
+		
+		return saveCard.getId();
+	}
+	
 	
 	//** UTIL **//
 
@@ -132,5 +161,15 @@ public class CardService {
 		}
 		
 		return card.get();
+	}
+	
+	//컬럼 존재하는지 확인
+	private Column getColumn(Long boardId, Long columnId) {
+		Optional<Column> column = columnRepository.findColumnByIdAndBoard(boardId, columnId);
+		if (column.isEmpty()) {
+			throw new ColumnException(ErrorType.NOT_FOUND_COLUMN);
+		}
+		
+		return column.get();
 	}
 }

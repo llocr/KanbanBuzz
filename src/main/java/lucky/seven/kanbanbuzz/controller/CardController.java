@@ -7,12 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.CardDetailResponseDto;
+import lucky.seven.kanbanbuzz.dto.CardRequestDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.dto.SortWithCardDto;
 import lucky.seven.kanbanbuzz.security.UserDetailsImpl;
@@ -55,5 +59,21 @@ public class CardController {
 			.build();
 		
 		return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
+	}
+	
+	@PostMapping
+	public ResponseEntity<ResponseMessage<Long>> saveCard (
+		@PathVariable Long boardId, @RequestBody @Valid CardRequestDto cardRequestDto,
+		@AuthenticationPrincipal UserDetailsImpl userDetails) {
+		
+		Long id = cardService.saveCard(boardId, cardRequestDto, userDetails.getUser());
+		
+		ResponseMessage<Long> responseMessage = ResponseMessage.<Long>builder()
+			.statusCode(HttpStatus.CREATED.value())
+			.message("카드 저장이 완료되었습니다.")
+			.data(id)
+			.build();
+		
+		return ResponseEntity.status(HttpStatus.CREATED).body(responseMessage);
 	}
 }
