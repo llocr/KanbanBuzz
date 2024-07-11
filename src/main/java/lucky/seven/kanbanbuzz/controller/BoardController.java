@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 import lucky.seven.kanbanbuzz.dto.BoardResponseDto;
 import lucky.seven.kanbanbuzz.dto.ResponseMessage;
-import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.security.UserDetailsImpl;
 import lucky.seven.kanbanbuzz.service.BoardService;
 import org.springframework.http.HttpStatus;
@@ -28,14 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class BoardController {
 
     private final BoardService boardService;
-    private final BoardRepository boardRepository;
 
     @GetMapping
     public ResponseEntity<ResponseMessage<List<BoardResponseDto>>> findAll() {
 
-        List<BoardResponseDto> list = boardRepository.findAll()
-                .stream()
-                .map(BoardResponseDto::from).toList();
+        List<BoardResponseDto> list = boardService.findAll();
 
         ResponseMessage<List<BoardResponseDto>> responseMessage =
                 ResponseMessage.<List<BoardResponseDto>>builder()
@@ -43,19 +39,34 @@ public class BoardController {
                         .message("가게 조회 완료")
                         .data(list)
                         .build();
-        return boardService.findAll(responseMessage);
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }
 
     @PostMapping
     public ResponseEntity<ResponseMessage<String>> createBoard(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @RequestBody BoardRequestDto request) {
-        return boardService.createBoard(userDetails.getUser(), request);
+        String message = boardService.createBoard(userDetails.getUser(), request);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseMessage.<String>builder().
+                        statusCode(200).
+                        message(message).
+                        build()
+        );
     }
 
     @GetMapping({"/{boardId}"})
     public ResponseEntity<ResponseMessage<BoardResponseDto>> findOne(@PathVariable Long boardId) {
-        return boardService.findOne(boardId);
+        BoardResponseDto responseDto = boardService.findOne(boardId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseMessage.<BoardResponseDto>builder().
+                        statusCode(200).
+                        message("단일 조회 완료").
+                        data(responseDto).
+                        build());
     }
 
     @PutMapping({"/{boardId}"})
@@ -63,20 +74,43 @@ public class BoardController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
             , @PathVariable Long boardId,
             @Valid @RequestBody BoardRequestDto requestDto) {
-        return boardService.updateBoard(userDetails.getUser(), boardId, requestDto);
+
+        BoardResponseDto responseDto = boardService.updateBoard(userDetails.getUser(), boardId,
+                requestDto);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ResponseMessage.<BoardResponseDto>builder().
+                        statusCode(200).
+                        message("수정 완료").
+                        data(responseDto).build());
     }
 
     @DeleteMapping("/{boardId}")
     public ResponseEntity<ResponseMessage<String>> deleteBoard(
             @AuthenticationPrincipal UserDetailsImpl userDetails
             , @PathVariable Long boardId) {
-        return boardService.deleteBoard(userDetails.getUser(), boardId);
+        String message = boardService.deleteBoard(userDetails.getUser(), boardId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseMessage.<String>builder().
+                        statusCode(200).
+                        message(message).
+                        build()
+        );
     }
 
     @PostMapping("/{boardId}/invitation")
-    public ResponseEntity<String> inviteUser(@AuthenticationPrincipal UserDetailsImpl userDetails
-            , @PathVariable Long boardId,
-            @RequestParam String userEmail) {
-        return boardService.inviteUser(userDetails.getUser(), boardId, userEmail);
+    public ResponseEntity<ResponseMessage<String>> inviteUser
+            (@AuthenticationPrincipal UserDetailsImpl userDetails
+                    , @PathVariable Long boardId,
+                    @RequestParam String userEmail) {
+        String message = boardService.inviteUser(userDetails.getUser(), boardId, userEmail);
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                ResponseMessage.<String>builder().
+                        statusCode(200).
+                        message(message).
+                        build()
+        );
     }
 }
