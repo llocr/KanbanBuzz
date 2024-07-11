@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -31,8 +32,11 @@ public class User extends Timestamped {
 	
 	@Column(nullable = false)
 	private String name;
-	
+
+	@Setter
 	private String refreshToken;
+
+	private UserRole role;
 	
 	//유저가 매니저인 보드
 	@OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
