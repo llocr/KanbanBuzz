@@ -5,6 +5,7 @@ import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.repository.UserRepository;
 import lucky.seven.kanbanbuzz.security.AuthenticationFilter;
+import lucky.seven.kanbanbuzz.security.AuthorizationFilter;
 import lucky.seven.kanbanbuzz.security.JwtUtil;
 import lucky.seven.kanbanbuzz.security.UserDetailsServiceImpl;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -66,9 +67,7 @@ public class WebSecurityConfig{
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/customers").permitAll()
-                        .requestMatchers("/customers/login").permitAll()
-                        .requestMatchers("/stores/**").permitAll()
+                        .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()
         );
 

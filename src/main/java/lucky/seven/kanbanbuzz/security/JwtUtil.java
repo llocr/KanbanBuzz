@@ -103,4 +103,10 @@ public class JwtUtil {
         }
         return false;
     }
+
+    // 헤더에 AccessToken 담기
+    public void setHeaderAccessToken(HttpServletResponse response, String accessToken){
+        response.setHeader(AUTHORIZATION_HEADER, accessToken);
+    }
+
 }
