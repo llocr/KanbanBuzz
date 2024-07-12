@@ -10,10 +10,6 @@
             margin: 10px;
         }
 
-        .column-container {
-            margin-bottom: 20px;
-        }
-
         .kanban-column {
             background-color: #f4f4f4;
             border-radius: 5px;
@@ -39,11 +35,6 @@
         .btn-smaller {
             padding: 5px 10px;
             font-size: 12px;
-        }
-
-        .btn-gray {
-            background-color: #6c757d;
-            border-color: #6c757d;
         }
 
         .navbar-custom {
@@ -72,6 +63,16 @@
             padding: 10px 15px;
             font-weight: bold;
             text-align: center;
+        }
+
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        #commentsList {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
         }
     </style>
 </head>
@@ -263,7 +264,7 @@
 
 <!-- View Card Modal -->
 <div class="modal fade" id="viewCardModal" tabindex="-1" role="dialog" aria-labelledby="viewCardModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewCardModalLabel">Card Details</h5>
@@ -276,6 +277,19 @@
                 <p><strong>완료 날짜: </strong><span id="viewCardEndDate"></span></p>
                 <p><strong>내용: </strong><span id="viewCardContents"></span></p>
                 <p><strong>담당자: </strong><span id="viewCardUser"></span></p>
+                <div>
+                    <h6>댓글</h6>
+                    <div id="commentsList"></div>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-secondary btn-sm" id="prevCommentsBtn">이전</button>
+                        <button class="btn btn-secondary btn-sm" id="nextCommentsBtn">다음</button>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="newComment">새 댓글</label>
+                        <textarea class="form-control" id="newComment"></textarea>
+                    </div>
+                    <button class="btn btn-primary" id="addCommentBtn">댓글 추가</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary btn-smaller" id="editCardBtn">수정</button>
@@ -362,6 +376,12 @@
                     alert('Error fetching board details: ' + error.message);
                 });
         }
+
+        // Attach click event to edit board button to populate the modal with board details
+        $('button[data-target="#editBoardModal"]').on('click', function () {
+            fetchAndPopulateBoardDetails(boardId);
+        });
+
 
         // Function to fetch and display cards
         function fetchAndDisplayCards() {
@@ -561,6 +581,26 @@
                 });
         });
 
+        // Add event listener for when the add card modal is shown
+        $('#addCardModal').on('show.bs.modal', function () {
+            // Clear the input fields
+            $('#cardTitle').val('');
+            $('#cardContents').val('');
+            $('#cardEndDate').val('');
+        });
+
+        // Attach click event to add card buttons
+        $('.add-card-btn').on('click', function () {
+            const columnId = $(this).data('column-id');
+            $('#cardColumnId').val(columnId);
+            $('#addCardModal').modal('show');
+
+            // Clear the input fields
+            $('#cardTitle').val('');
+            $('#cardContents').val('');
+            $('#cardEndDate').val('');
+        });
+
         // Function to add a new column
         $('#addColumnForm').on('submit', function (e) {
             e.preventDefault();
@@ -614,6 +654,76 @@
                 });
         });
 
+        let currentCommentPage = 0; // Current comment page
+        let totalCommentPages = 0; // Total comment pages
+
+// Function to fetch comments for a card
+        function fetchComments(cardId, page = 0) {
+            fetch(`http://localhost:8080/api/cards/${cardId}/comments?page=${page}&size=10`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200 || data.message === '댓글 조회 완료') {
+                        const comments = Array.isArray(data.data.content) ? data.data.content : []; // Ensure comments is an array
+                        const commentsList = $('#commentsList');
+                        commentsList.empty(); // Clear previous comments
+                        comments.forEach(comment => {
+                            const commentElement = `<p>${comment.contents} <small>(${comment.createdAt})</small></p>`;
+                            commentsList.append(commentElement);
+                        });
+
+                        // Update pagination variables
+                        currentCommentPage = data.data.number;
+                        totalCommentPages = data.data.totalPages;
+
+                        // Update button states
+                        $('#prevCommentsBtn').prop('disabled', currentCommentPage <= 0);
+                        $('#nextCommentsBtn').prop('disabled', currentCommentPage >= totalCommentPages - 1);
+                    } else {
+                        alert('Failed to fetch comments: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching comments:', error);
+                    alert('Error fetching comments: ' + error.message);
+                });
+        }
+
+// Attach click event to view card button
+        $('.card').on('click', function () {
+            const cardId = $(this).data('card-id');
+            viewCard(cardId);
+        });
+
+        // Function to add a comment to a card
+        function addComment(cardId, commentContent) {
+            fetch(`http://localhost:8080/api/cards/${cardId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({contents: commentContent})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 201) {
+                        $('#newComment').val(''); // Clear the comment input
+                        fetchComments(cardId); // Refresh comments
+                    } else {
+                        alert('Failed to add comment: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding comment:', error);
+                    alert('Error adding comment: ' + error.message);
+                });
+        }
+
         // Function to view a card's details
         function viewCard(cardId) {
             fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
@@ -632,21 +742,44 @@
                         $('#viewCardUser').text(card.user);
                         $('#viewCardModal').modal('show');
 
+                        // Fetch and display comments
+                        fetchComments(cardId);
+
                         // Attach click event to edit card button
-                        $('#editCardBtn').on('click', function () {
+                        $('#editCardBtn').off('click').on('click', function () {
                             $('#editCardId').val(cardId);
                             $('#editCardTitle').val(card.title);
                             $('#editCardContents').val(card.contents);
                             $('#editCardEndDate').val(card.endDate);
                             $('#viewCardModal').modal('hide');
                             $('#editCardModal').modal('show');
+                            populateColumnOptions(card.columnId); // Populate column options
                         });
 
                         // Attach click event to delete card button
-                        $('#deleteCardBtn').on('click', function () {
+                        $('#deleteCardBtn').off('click').on('click', function () {
                             const confirmDelete = confirm('정말 이 카드를 삭제하시겠습니까?');
                             if (confirmDelete) {
                                 deleteCard(cardId);
+                            }
+                        });
+
+                        // Attach click event to add comment button
+                        $('#addCommentBtn').off('click').on('click', function () {
+                            const commentContent = $('#newComment').val();
+                            addComment(cardId, commentContent);
+                        });
+
+                        // Attach click event to pagination buttons
+                        $('#prevCommentsBtn').off('click').on('click', function () {
+                            if (currentCommentPage > 0) {
+                                fetchComments(cardId, currentCommentPage - 1);
+                            }
+                        });
+
+                        $('#nextCommentsBtn').off('click').on('click', function () {
+                            if (currentCommentPage < totalCommentPages - 1) {
+                                fetchComments(cardId, currentCommentPage + 1);
                             }
                         });
 
@@ -684,6 +817,64 @@
                     alert('Error deleting card: ' + error.message);
                 });
         }
+
+        // Function to fetch and populate board details in the edit modal
+        function fetchAndPopulateBoardDetails(boardId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        const board = data.data;
+                        $('#editBoardName').val(board.name);
+                        $('#editBoardBio').val(board.bio);
+                    } else {
+                        alert('Failed to fetch board details: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching board details:', error);
+                    alert('Error fetching board details: ' + error.message);
+                });
+        }
+
+        // Function to handle board editing
+        $('#editBoardForm').on('submit', function (e) {
+            e.preventDefault();
+            const name = $('#editBoardName').val();
+            const bio = $('#editBoardBio').val();
+
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({name, bio})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        $('#editBoardModal').modal('hide');
+                        fetchAndDisplayBoardDetails(); // Refresh the board details after editing
+                    } else {
+                        alert('Failed to edit board: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error editing board:', error);
+                    alert('Error editing board: ' + error.message);
+                });
+        });
+
+// Attach click event to edit board button to populate the modal with board details
+        $('button[data-target="#editBoardModal"]').on('click', function () {
+            fetchAndPopulateBoardDetails(boardId);
+        });
 
         // Function to delete a board
         $('#confirmDeleteBoardBtn').on('click', function () {
