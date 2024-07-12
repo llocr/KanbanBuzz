@@ -32,9 +32,10 @@ public enum ErrorType {
 	//card
 	INVALID_CARD_USER(HttpStatus.UNAUTHORIZED, "작성자가 일치하지 않습니다."),
 	NOT_FOUND_CARD(HttpStatus.NOT_FOUND, "카드가 존재하지 않습니다."),
-	INVALID_SORT(HttpStatus.BAD_REQUEST, "정렬 방식이 올바르지 않습니다.");
+	INVALID_SORT(HttpStatus.BAD_REQUEST, "정렬 방식이 올바르지 않습니다."),
 	
 	//comment
+	NOT_AUTHORIZED_COMMENT(HttpStatus.UNAUTHORIZED, "권한이 없습니다.");
 	
 	private final HttpStatus httpStatus;
 	private final String message;
