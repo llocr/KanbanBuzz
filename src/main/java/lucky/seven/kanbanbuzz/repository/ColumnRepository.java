@@ -11,8 +11,17 @@ import lucky.seven.kanbanbuzz.entity.Column;
 
 @Repository
 public interface ColumnRepository extends JpaRepository<Column, Long> {
-	Set<Column> findByBoardId(Long boardId);
+  Set<Column> findByBoardId(Long boardId);
 	
-	@Query("SELECT c FROM Column c WHERE c.board.id = :boardId AND c.id = :columnId")
-	Optional<Column> findColumnByIdAndBoard(Long boardId, Long columnId);
+  @Query("SELECT c FROM Column c WHERE c.board.id = :boardId AND c.id = :columnId")
+  Optional<Column> findColumnByIdAndBoard(Long boardId, Long columnId);
+
+  List<ColumnResponseDto> findAllByBoardIdOrderBySortingAsc(Long boardId);
+
+  Long countByBoardId(Long boardId);
+
+  Optional<Column> findByBoardIdAndStatusName(Long boardId, String statusName);
+  
+  Optional<Object> findByIdAndBoardId(Long columnId, Long boardId);
+
 }
