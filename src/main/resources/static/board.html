@@ -383,7 +383,7 @@
         });
 
 
-        // Function to fetch and display cards
+        // Fetch and display cards
         function fetchAndDisplayCards() {
             fetch(`http://localhost:8080/api/boards/${boardId}/cards?sort=${sortType}`, {
                 headers: {
@@ -413,24 +413,24 @@
 
                         cardsData.forEach(column => {
                             const columnElement = `
-          <div class="col-md-4">
-            <div class="kanban-column" data-column-id="${column.sortId}">
-    <h3>${column.sortName}</h3>
-    <button class="btn btn-smaller delete-column-btn" data-column-id="${column.sortId}">삭제</button>
-    <div class="kanban-cards">
-        ${column.cards.map(card => `
-            <div class="card" data-card-id="${card.cardId}">
-                <div class="card-body">
-                    <h5 class="card-title">${card.title}</h5>
-                    <p class="card-text">담당자 : ${card.user}</p>
+                <div class="col-md-4">
+                    <div class="kanban-column" data-column-id="${column.sortId}">
+                        <h3>${column.sortName}</h3>
+                        <button class="btn btn-smaller delete-column-btn" data-column-id="${column.sortId}">삭제</button>
+                        <div class="kanban-cards">
+                            ${column.cards.map(card => `
+                                <div class="card" data-card-id="${card.cardId}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${card.title}</h5>
+                                        <p class="card-text">담당자 : ${card.user}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn btn-primary add-card-btn" data-column-id="${column.sortId}">+</button>
+                    </div>
                 </div>
-            </div>
-        `).join('')}
-    </div>
-    <button class="btn btn-primary add-card-btn" data-column-id="${column.sortId}">+</button>
-</div>
-          </div>
-          `;
+                `;
                             kanbanBoard.append(columnElement);
                         });
 
@@ -453,34 +453,39 @@
                             $('#deleteColumnModal').modal('show');
                         });
 
-                        // Initialize Sortable for columns
-                        new Sortable(kanbanBoard[0], {
-                            animation: 150,
-                            onEnd: function (evt) {
-                                const columnOrder = Array.from(kanbanBoard.children()).map(column => $(column).find('.kanban-column').data('column-id'));
-                                reorderColumns(columnOrder);
-                            }
+                        // Initialize Sortable for columns and cards
+                        $('.kanban-column').each(function() {
+                            const columnId = $(this).data('column-id');
+                            new Sortable($(this).find('.kanban-cards')[0], {
+                                group: 'shared',
+                                animation: 150,
+                                onEnd: function (evt) {
+                                    const cardId = $(evt.item).data('card-id');
+                                    const newColumnId = $(evt.to).closest('.kanban-column').data('column-id');
+                                    updateCardColumn(cardId, newColumnId);
+                                }
+                            });
                         });
 
                     } else if (sortType === 'user') {
                         cardsData.forEach(user => {
                             if (user.cards.length > 0) { // Check if user has cards
                                 const userElement = `
-            <div class="col-md-4">
-              <div class="kanban-column" data-user-id="${user.sortId}">
-                <h3>${user.sortName}</h3>
-                <div class="kanban-cards">
-                  ${user.cards.map(card => `
-                    <div class="card" data-card-id="${card.cardId}">
-                      <div class="card-body">
-                        <h5 class="card-title">${card.title}</h5>
-                      </div>
+                    <div class="col-md-4">
+                        <div class="kanban-column" data-user-id="${user.sortId}">
+                            <h3>${user.sortName}</h3>
+                            <div class="kanban-cards">
+                                ${user.cards.map(card => `
+                                    <div class="card" data-card-id="${card.cardId}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${card.title}</h5>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-            `;
+                    `;
                                 kanbanBoard.append(userElement);
                             }
                         });
@@ -495,15 +500,15 @@
                         cardsData.forEach(column => {
                             column.cards.forEach(card => {
                                 const cardElement = `
-            <div class="col-md-4">
-              <div class="card" data-card-id="${card.cardId}">
-                <div class="card-body">
-                  <h5 class="card-title">${card.title}</h5>
-                  <p class="card-text">담당자 : ${card.user}</p>
-                </div>
-              </div>
-            </div>
-            `;
+                    <div class="col-md-4">
+                        <div class="card" data-card-id="${card.cardId}">
+                            <div class="card-body">
+                                <h5 class="card-title">${card.title}</h5>
+                                <p class="card-text">담당자 : ${card.user}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;
                                 kanbanBoard.append(cardElement);
                             });
                         });
@@ -721,6 +726,30 @@
                 .catch(error => {
                     console.error('Error adding comment:', error);
                     alert('Error adding comment: ' + error.message);
+                });
+        }
+
+        // Function to update card's column
+        function updateCardColumn(cardId, newColumnId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ columnId: newColumnId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        fetchAndDisplayCards(); // Refresh the board after updating card's column
+                    } else {
+                        alert('Failed to update card column: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating card column:', error);
+                    alert('Error updating card column: ' + error.message);
                 });
         }
 
