@@ -9,6 +9,8 @@ import lucky.seven.kanbanbuzz.entity.Board;
 @Builder
 public class BoardResponseDto {
 
+    private Long Id;
+
     @NotNull(message = "제목을 입력해주세요.")
     private String name;
 
@@ -18,6 +20,7 @@ public class BoardResponseDto {
     // Builder 패턴 사용
     public static BoardResponseDto from(Board board) {
         return BoardResponseDto.builder()
+                .Id(board.getId())
                 .name(board.getName())
                 .bio(board.getBio())
                 .build();
