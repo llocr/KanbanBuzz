@@ -27,8 +27,12 @@ public class CommentController {
             @RequestBody CommentRequestDto requestDto
     ){
 
-        commentService.createComment(userDetails.getUser(),cardId,requestDto);
-        ResponseMessage<Object> responseMessage = ResponseMessage.builder().message("댓글 달기 완료").build();
+        Long commentId = commentService.createComment(userDetails.getUser(),cardId,requestDto);
+        ResponseMessage<Object> responseMessage = ResponseMessage.builder()
+                .message("댓글 달기 완료")
+                .statusCode(201)
+                .data(commentId)
+                .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(responseMessage);
     }
 
@@ -42,9 +46,10 @@ public class CommentController {
     ){
         Pageable pageable = (Pageable) PageRequest.of(page,size, Sort.by(sortBy).descending());
         Page<CommentResponseDto> pages = commentService.getComments(userDetails.getUser(),cardId,pageable);
-        ResponseMessage<Object> responseMessage = ResponseMessage
-                .builder().data(pages)
+        ResponseMessage<Object> responseMessage = ResponseMessage.builder()
+                .data(pages)
                 .message("댓글 조회 완료")
+                .statusCode(200)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }

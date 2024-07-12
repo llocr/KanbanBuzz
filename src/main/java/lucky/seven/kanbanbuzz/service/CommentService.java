@@ -28,7 +28,7 @@ public class CommentService {
     private final CommentRepositroy commentRepositroy;
     private final CardRepository cardRepository;
     @Transactional
-    public void createComment(User user, Long cardId, CommentRequestDto requestDto){
+    public Long createComment(User user, Long cardId, CommentRequestDto requestDto){
         Card card = cardRepository.findById(cardId).orElseThrow(()-> new CardException(ErrorType.NOT_FOUND_CARD));
         Comment comment = Comment.builder()
                 .contents(requestDto.getContents())
@@ -36,15 +36,17 @@ public class CommentService {
                 .user(user)
                 .build();
         commentRepositroy.save(comment);
+        return comment.getId();
     }
 
     @Transactional
     public Page<CommentResponseDto> getComments(User user, Long cardId, Pageable pageable){
-        if(user==null){
-            throw new CommentException(ErrorType.NOT_AUTHORIZED_COMMENT);
-        }
+
         Card card = cardRepository.findById(cardId).orElseThrow(()->new CardException(ErrorType.NOT_FOUND_CARD));
         Page<Comment> commentPages = commentRepositroy.findByCard(card,pageable);
-        return commentPages.map(comment -> CommentResponseDto.builder().contents(comment.getContents()).createdAt(comment.getCreatedAt()).build());
+        return commentPages.map(comment -> CommentResponseDto.builder()
+                .contents(comment.getContents())
+                .createdAt(comment.getCreatedAt())
+                .build());
     }
 }
