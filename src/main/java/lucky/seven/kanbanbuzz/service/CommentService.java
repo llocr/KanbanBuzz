@@ -40,7 +40,7 @@ public class CommentService {
 
     @Transactional
     public Page<CommentResponseDto> getComments(User user, Long cardId, Pageable pageable){
-        if(user!=null){
+        if(user==null){
             throw new CommentException(ErrorType.NOT_AUTHORIZED_COMMENT);
         }
         Card card = cardRepository.findById(cardId).orElseThrow(()->new CardException(ErrorType.NOT_FOUND_CARD));
