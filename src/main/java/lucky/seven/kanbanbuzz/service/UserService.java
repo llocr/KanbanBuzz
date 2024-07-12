@@ -47,4 +47,10 @@ public class UserService {
 
         userRepository.save(user);
     }
+    @Transactional
+    public void updateRefreshToken(String email,String refreshToken){
+        User user = userRepository.findByEmail(email).orElseThrow(()-> new UserException(ErrorType.INVALID_ACCOUNT_ID));
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
+    }
 }
