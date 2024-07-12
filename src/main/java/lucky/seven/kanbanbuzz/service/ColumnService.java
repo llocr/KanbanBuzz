@@ -15,7 +15,6 @@ import lucky.seven.kanbanbuzz.repository.ColumnRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
 @Slf4j
 @Service
@@ -37,7 +36,7 @@ public class ColumnService {
         checkUser(user);
         Board findBoard = findBoardById(boardId);
 
-        if(findColumn(boardId, requestDto.getStatusName())) {
+        if(columnRepository.findByBoardIdAndStatusName(boardId, requestDto.getStatusName()).isPresent()) {
             throw new UserException(ErrorType.DUPLICATE_STATUS_NAME);
         }
 
@@ -58,11 +57,9 @@ public class ColumnService {
     public void deleteColumn(Long boardId, Long columnId, User user) {
 
         checkUser(user);
-        Board findBoard = findBoardById(boardId);
 
-        if(columnRepository.findById(columnId).isEmpty()) {
-            throw new UserException(ErrorType.INVALID_COLUMN);
-        }
+        columnRepository.findByIdAndBoardId(columnId, boardId).orElseThrow(() ->
+                new UserException(ErrorType.INVALID_COLUMN));
 
         columnRepository.deleteById(columnId);
     }
@@ -88,38 +85,6 @@ public class ColumnService {
         }
     }
 
-    /**
-     * 특정 보드의 컬럼을 정렬하여 반환
-     * @param boardId
-     * @return
-     */
-    @Transactional
-    public List<ColumnResponseDto> queryColumns(Long boardId) {
-
-        Board findBoard = findBoardById(boardId);
-        return columnRepository.findAllByBoardIdOrderBySortingAsc(boardId);
-    }
-
-    /**
-     * 입력한 컬럼 이름이 같은 보드에 존재하는지 확인
-     * @param boardId
-     * @param statusName
-     * @return
-     */
-    private boolean findColumn(Long boardId, String statusName) {
-        List<Column> columns = columnRepository.findByStatusName(statusName);
-
-        if(columns.isEmpty()) {
-            return false;
-        }
-
-        for(Column column : columns) {
-            if(column.getBoard().getId().equals(boardId)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * 해당 아이디를 가진 보드가 존재하는지 확인

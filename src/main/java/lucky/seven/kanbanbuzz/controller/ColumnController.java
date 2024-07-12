@@ -49,15 +49,15 @@ public class ColumnController {
      * @return
      */
     @DeleteMapping("/{boardId}/columns/{columnId}")
-    public ResponseEntity<ResponseMessage<Void>> columnDelete(
+    public ResponseEntity<ResponseMessage<Long>> columnDelete(
             @PathVariable Long boardId, @PathVariable Long columnId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         columnService.deleteColumn(boardId, columnId, userDetails.getUser());
 
-        ResponseMessage<Void> responseMessage = ResponseMessage
-                .<Void>builder().statusCode(HttpStatus.OK.value())
-                .message("컬럼이 삭제되었습니다.").data(null).build();
+        ResponseMessage<Long> responseMessage = ResponseMessage
+                .<Long>builder().statusCode(HttpStatus.OK.value())
+                .message("컬럼이 삭제되었습니다.").data(columnId).build();
 
         return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }
@@ -70,15 +70,15 @@ public class ColumnController {
      * @return
      */
     @PostMapping("/{boardId}/columns/reorder")
-    public ResponseEntity<ResponseMessage<Void>> columnsReorder(
+    public ResponseEntity<ResponseMessage<Long>> columnsReorder(
             @PathVariable Long boardId, @RequestParam("id[]") Long[] id,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         columnService.reorderColumns(boardId, id, userDetails.getUser());
 
-        ResponseMessage<Void> responseMessage = ResponseMessage
-                .<Void>builder().statusCode(HttpStatus.OK.value())
-                .message("컬럼이 정렬되었습니다.").data(null).build();
+        ResponseMessage<Long> responseMessage = ResponseMessage
+                .<Long>builder().statusCode(HttpStatus.OK.value())
+                .message("컬럼이 정렬되었습니다.").data(boardId).build();
 
         return ResponseEntity.status(HttpStatus.OK).body(responseMessage);
     }

@@ -2,7 +2,6 @@ package lucky.seven.kanbanbuzz.entity;
 
 import jakarta.persistence.*;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.ColumnRequestDto;
@@ -14,7 +13,6 @@ import java.util.Set;
 @Getter
 @Table(name = "columns")
 @NoArgsConstructor
-@Data
 public class Column {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

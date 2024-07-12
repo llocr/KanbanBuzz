@@ -13,5 +13,7 @@ public interface ColumnRepository extends JpaRepository<Column, Long> {
 
     Long countByBoardId(Long boardId);
 
-    List<Column> findByStatusName(String statusName);
+    Optional<Column> findByBoardIdAndStatusName(Long boardId, String statusName);
+
+    Optional<Object> findByIdAndBoardId(Long columnId, Long boardId);
 }
