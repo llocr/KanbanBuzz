@@ -53,7 +53,7 @@ public class CardService {
 				return groupCardsByUser(boardId, cardList);
 			case "all":
 				List<CardSimpleResponseDto> all = cardList.stream().map(CardSimpleResponseDto::new).collect(Collectors.toList());
-				return List.of(new SortWithCardDto(0L, sort, all));
+				return List.of(new SortWithCardDto(0L, sort, 0L, all));
 			default:
 				throw new CardException(ErrorType.INVALID_SORT);
 		}
@@ -73,6 +73,7 @@ public class CardService {
 			.map(userBoard -> new SortWithCardDto(
 				userBoard.getUser().getId(),
 				userBoard.getUser().getName(),
+				userBoard.getUser().getId(),
 				cardsByUser.getOrDefault(userBoard.getUser().getName(), List.of())
 			))
 			.collect(Collectors.toList());
@@ -92,6 +93,7 @@ public class CardService {
 			.map(column -> new SortWithCardDto(
 				column.getId(),
 				column.getStatusName(),
+				column.getSorting(),
 				cardsByColumn.getOrDefault(column.getId(), List.of())
 			))
 			.collect(Collectors.toList());

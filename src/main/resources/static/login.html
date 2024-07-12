@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body, html {
+            height: 100%;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        form {
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-control {
+            height: calc(1.5em + 1.25rem + 2px);
+            padding: 0.625rem 0.75rem;
+        }
+        .btn-primary {
+            background-color: #2ECB82;
+            border-color: #2ECB82;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 2px solid #f1f1f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #000000 !important;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-link-custom {
+            background-color: #2ECB82;
+            color: #ffffff !important;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-custom">
+    <a class="navbar-brand" href="#">KanbanBuzz</a>
+    <div class="nav-links">
+        <button class="btn nav-link-custom" id="backButton">뒤로가기</button>
+    </div>
+</nav>
+<div class="container">
+    <h1>로그인</h1>
+    <form id="login-form">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+    </form>
+    <div id="response-message" class="error-message"></div>
+</div>
+
+<!-- Optional: jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('backButton').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 폼 기본 동작 막기
+
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+
+            var requestData = {
+                email: email,
+                password: password
+            };
+
+            console.log('Request Data:', requestData);
+
+            fetch('http://localhost:8080/api/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        var accessToken = response.headers.get('Authorization');
+                        return response.json().then(data => ({ data, accessToken }));
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.message);
+                        });
+                    }
+                })
+                .then(({ data, accessToken }) => {
+                    console.log('Response Data:', data);
+                    if (data.statusCode === 200) {
+                        alert('Login successful!');
+                        // AccessToken을 localStorage에 저장
+                        localStorage.setItem('Authorization', accessToken);
+                        window.location.href = '/home.html'; // 홈 페이지로 리디렉션 또는 다른 페이지로 리디렉션
+                    } else {
+                        alert('Login failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    var responseMessage = document.getElementById('response-message');
+                    responseMessage.innerHTML = 'Login failed: ' + error.message;
+                });
+        });
+    });
+</script>
+</body>
+</html>

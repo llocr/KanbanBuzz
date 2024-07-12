@@ -10,5 +10,6 @@ import lombok.Getter;
 public class SortWithCardDto {
 	private Long SortId;
 	private String SortName;
+	private Long SortIndex;
 	private List<CardSimpleResponseDto> cards;
 }

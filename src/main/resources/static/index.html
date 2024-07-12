@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KanbanBuzz</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body, html {
+            height: 100%;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            width: 200px;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-login {
+            background-color: #2ECB82;
+            border-color: #2ECB82;
+            color: #fff;
+        }
+        .btn-register {
+            background-color: #fff;
+            color: #2ECB82;
+            border: 2px solid #2ECB82;
+        }
+        .btn-login:hover, .btn-register:hover {
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+<div class="container text-center">
+    <h1>KanbanBuzz</h1>
+    <button id="loginButton" class="btn btn-login">로그인</button>
+    <button id="registerButton" class="btn btn-register">회원가입</button>
+</div>
+
+<!-- Optional: jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var accessToken = localStorage.getItem('Authorization');
+        if (accessToken) {
+            window.location.href = '/home.html'; // 이미 로그인이 되어있으면 홈 페이지로 리디렉션
+            return;
+        }
+
+        document.getElementById('loginButton').addEventListener('click', function() {
+            window.location.href = 'login.html';
+        });
+
+        document.getElementById('registerButton').addEventListener('click', function() {
+            window.location.href = 'register.html';
+        });
+    });
+</script>
+</body>
+</html>

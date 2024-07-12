@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body, html {
+            height: 100%;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        form {
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+            padding: 10px;
+        }
+        .form-control {
+            height: calc(1.5em + 1.25rem + 2px);
+            padding: 0.625rem 0.75rem;
+        }
+        .btn-primary {
+            background-color: #2ECB82;
+            border-color: #2ECB82;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.875rem;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 2px solid #f1f1f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #000000 !important;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-link-custom {
+            background-color: #2ECB82;
+            color: #ffffff !important;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-custom">
+    <a class="navbar-brand" href="#">KanbanBuzz</a>
+    <div class="nav-links">
+        <button class="btn nav-link-custom" id="backButton">뒤로가기</button>
+    </div>
+</nav>
+<div class="container">
+    <h1>회원가입</h1>
+    <form id="signup-form">
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+            <span id="email-error" class="error-message"></span>
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <p class="form-text text-muted">비밀번호는 최소 하나의 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다. <br>
+                비밀번호는 8자 이상, 15자 이하이어야 합니다.</p>
+            <input type="password" class="form-control" id="password" name="password" required>
+            <span id="password-error" class="error-message"></span>
+        </div>
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+            <span id="name-error" class="error-message"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+    </form>
+</div>
+
+<!-- Optional: jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('backButton').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // 폼 기본 동작 막기
+
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+            var name = document.getElementById('name').value;
+
+            var requestData = {
+                email: email,
+                password: password,
+                name: name
+            };
+
+            console.log('Request Data:', requestData);
+
+            fetch('http://localhost:8080/api/user/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response Data:', data);
+                    if (data.statusCode === 201) {
+                        alert('회원가입이 완료되었습니다!');
+                        window.location.href = '/login.html'; // 로그인 페이지로 리디렉션
+                    } else if (data.statusCode === 208) {
+                        var emailError2 = document.getElementById('email-error');
+                        emailError2.innerHTML = data.message ? data.message : '';
+                    } else if (data.statusCode === 400) {
+                        var emailError = document.getElementById('email-error');
+                        var passwordError = document.getElementById('password-error');
+                        var nameError = document.getElementById('name-error');
+
+                        emailError.innerHTML = data.message.email ? data.message.email : '';
+                        passwordError.innerHTML = data.message.password ? data.message.password : '';
+                        nameError.innerHTML = data.message.name ? data.message.name : '';
+                    } else {
+                        alert('회원가입에 실패했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Sign up failed: ' + error);
+                });
+        });
+    });
+</script>
+</body>
+</html>

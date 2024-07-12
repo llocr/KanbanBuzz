@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Home</title>
+    <style>
+        .card {
+            margin: 10px;
+            cursor: pointer;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 2px solid #f1f1f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #000000 !important;
+        }
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-link-custom, .btn-primary {
+            background-color: #2ECB82 !important;
+            border-color: #2ECB82 !important;
+            color: #ffffff !important;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+        }
+        .nav-link-custom:hover, .btn-primary:hover {
+            background-color: #28b374 !important;
+            border-color: #28b374 !important;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-custom">
+    <a class="navbar-brand" href="#">KanbanBuzz</a>
+    <div class="nav-links">
+        <a class="nav-link nav-link-custom" href="/home.html">보드 보기</a>
+        <div class="nav-link nav-link-custom" id="addBoardBtn">보드 추가</div>
+        <div class="nav-link nav-link-custom" id="logoutBtn">로그아웃</div>
+    </div>
+</nav>
+
+<div class="container">
+    <h1 class="mt-5">보드 전체 보기</h1>
+    <div class="row" id="board-container">
+        <!-- Cards will be dynamically added here -->
+    </div>
+</div>
+
+<!-- Add Board Modal -->
+<div class="modal fade" id="addBoardModal" tabindex="-1" role="dialog" aria-labelledby="addBoardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBoardModalLabel">새로운 보드 추가</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addBoardForm">
+                    <div class="form-group">
+                        <label for="boardName">보드 이름</label>
+                        <input type="text" class="form-control" id="boardName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="boardBio">보드 설명</label>
+                        <textarea class="form-control" id="boardBio" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">추가</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var accessToken = localStorage.getItem('Authorization');
+        console.log('Stored Token:', accessToken); // 저장된 토큰 콘솔에 출력
+        if (!accessToken) {
+            alert("로그인을 먼저 진행해 주세요!");
+            window.location.href = '/login.html'; // 토큰이 없으면 로그인 페이지로 리디렉션
+            return;
+        }
+
+        fetch('http://localhost:8080/api/boards', {
+            headers: {
+                'Authorization': accessToken,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (response.status === 403) {
+                    alert("권한이 없습니다. 로그인 페이지로 이동합니다.");
+                    window.location.href = '/login.html';
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data) {
+                    throw new Error('No data received');
+                }
+                if (data.statusCode === 200) {
+                    const boards = data.data;
+                    const boardContainer = $('#board-container');
+
+                    boards.forEach(board => {
+                        const card = `
+                        <div class="col-md-4">
+                            <div class="card" onclick="location.href='/board.html?boardId=${board.id}'">
+                                <div class="card-body">
+                                    <h5 class="card-title">${board.name}</h5>
+                                    <p class="card-text">${board.bio}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                        boardContainer.append(card);
+                    });
+                } else {
+                    alert('Failed to load boards: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching boards:', error);
+                alert('Error fetching boards: ' + error.message);
+            });
+
+        // Show add board modal
+        $('#addBoardBtn').on('click', function() {
+            $('#addBoardModal').modal('show');
+        });
+
+        // Handle add board form submission
+        $('#addBoardForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const boardName = $('#boardName').val();
+            const boardBio = $('#boardBio').val();
+
+            fetch('http://localhost:8080/api/boards', {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: boardName, bio: boardBio })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        alert('Board added successfully.');
+                        $('#addBoardModal').modal('hide');
+                        location.reload(); // Reload the page to show the new board
+                    } else {
+                        alert('Failed to add board: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding board:', error);
+                    alert('Error adding board: ' + error.message);
+                });
+        });
+
+        // Handle logout
+        $('#logoutBtn').on('click', function() {
+            fetch('http://localhost:8080/api/user/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        localStorage.removeItem('Authorization');
+                        alert('로그아웃 되었습니다.');
+                        window.location.href = '/login.html';
+                    } else {
+                        alert('로그아웃 실패: ' + response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                    alert('Error logging out: ' + error.message);
+                });
+        });
+    });
+</script>
+</body>
+</html>

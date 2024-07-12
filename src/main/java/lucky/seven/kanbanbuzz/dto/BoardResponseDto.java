@@ -16,6 +16,8 @@ public class BoardResponseDto {
 
     @NotNull(message = "소개글을 간단하게 작성하여주세요!")
     private String bio;
+    
+    private Long id;
 
     // Builder 패턴 사용
     public static BoardResponseDto from(Board board) {
@@ -23,6 +25,7 @@ public class BoardResponseDto {
                 .Id(board.getId())
                 .name(board.getName())
                 .bio(board.getBio())
+                .id(board.getId())
                 .build();
     }
 }
