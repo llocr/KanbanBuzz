@@ -5,7 +5,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 import lucky.seven.kanbanbuzz.dto.BoardResponseDto;
-import lucky.seven.kanbanbuzz.dto.ResponseMessage;
 import lucky.seven.kanbanbuzz.entity.Board;
 import lucky.seven.kanbanbuzz.entity.User;
 import lucky.seven.kanbanbuzz.entity.UserBoard;
@@ -15,8 +14,6 @@ import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,86 +34,75 @@ public class BoardService {
 
     }
 
-    public String createBoard(User user, BoardRequestDto request) {
-        if (user.getRole() == UserRole.ROLE_USER) {
-            throw new BoardException(ErrorType.NOT_AUTHORIZED_BOARD);
-        }
+    public Long createBoard(User user, BoardRequestDto request) {
+        checkRole(user);
         Board board = Board.builder().requestDto(request).build();
         boardRepository.save(board);
 
-        return (board.getId() + "번째 보드 생성 완료");
+        return board.getId();
     }
 
-
     public BoardResponseDto findOne(Long id) {
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
-
+        Board board = getBoardById(id);
         return BoardResponseDto.from(board);
     }
 
     @Transactional
     public BoardResponseDto updateBoard(User user, Long id,
             BoardRequestDto requestDto) {
-
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
-
-        if (user.getRole() == UserRole.ROLE_USER) {
-            throw new BoardException(ErrorType.NOT_AUTHORIZED_BOARD);
-        }
-
+        checkRole(user);
+        Board board = getBoardById(id);
         board.update(requestDto);
         return BoardResponseDto.from(board);
     }
 
     @Transactional
-    public String deleteBoard(User user, Long id) {
-
-        if (user.getRole() == UserRole.ROLE_USER) {
-            throw new BoardException(ErrorType.NOT_AUTHORIZED_BOARD);
-        }
-
-        Board board = boardRepository.findById(id)
-                .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
-
+    public Long deleteBoard(User user, Long id) {
+        checkRole(user);
+        Board board = getBoardById(id);
         boardRepository.deleteById(id);
-
-        return id + "번째 보드 삭제 완료";
+        return id;
     }
 
+
     @Transactional
-    public String inviteUser(User user, Long id, String userEmail) {
+    public Long inviteUser(User user, Long id, String userEmail) {
 
-        if (user.getRole() == UserRole.ROLE_USER) {
-            throw new BoardException(ErrorType.NOT_AUTHORIZED_BOARD);
-        }
-
-        Board board = boardRepository.findById(id).orElseThrow();
-        Optional<UserBoard> userBoardOptional = userBoardRepository.findByUserEmail(userEmail);
+        Optional<UserBoard> userBoardOptional = userBoardRepository.findByUserEmailAndBoardId(
+                userEmail, id);
 
         // 이미 초대 된 사용자를 초대 한 경우
         if (userBoardOptional.isPresent()) {
             throw new BoardException(ErrorType.USER_ALREADY_EXISTS);
         }
 
+        checkRole(user);
+        Board board = getBoardById(id);
+
         User invitedUser = userRepository.findByEmail(userEmail).orElseThrow(
                 () -> new BoardException(ErrorType.NOT_FOUND_USER)
         );
 
-        // 해당 유저 role 변경 후 저장
-        User changedUser = User.builder().email(invitedUser.getEmail())
-                .password(invitedUser.getPassword())
-                .name(invitedUser.getName())
-                .refreshToken(invitedUser.getRefreshToken())
-                .role(UserRole.ROLE_MANAGER)
-                .build();
-
-        UserBoard userBoard = UserBoard.builder()
-                .user(changedUser).board(board).build();
+        UserBoard userBoard = UserBoard.builder().
+                user(invitedUser).
+                board(board).
+                build();
 
         userBoardRepository.save(userBoard);
-        return userEmail + " 사용자를 초대 완료하였습니다.";
-
+        return id;
     }
+
+    // 유저 권한 조회 메서드
+    public void checkRole(User user) {
+        if (user.getRole() == UserRole.ROLE_USER) {
+            throw new BoardException(ErrorType.NOT_AUTHORIZED_BOARD);
+        }
+    }
+
+    // 보드 탐색 메서드
+    public Board getBoardById(Long id) {
+        return boardRepository.findById(id)
+                .orElseThrow(() -> new BoardException(ErrorType.NOT_FOUND_BOARD));
+    }
+
 }

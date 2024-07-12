@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserBoardRepository extends JpaRepository<UserBoard, Long> {
 
-    @Query("SELECT ub FROM UserBoard ub WHERE ub.user.email = :email")
-    Optional<UserBoard> findByUserEmail(@Param("email") String email);
+    @Query("SELECT ub FROM UserBoard ub WHERE ub.user.email = :email AND ub.board.id = :boardId")
+    Optional<UserBoard> findByUserEmailAndBoardId(@Param("email") String email, @Param("boardId") Long boardId);
 
 }
