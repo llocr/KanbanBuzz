@@ -1,12 +1,5 @@
 package lucky.seven.kanbanbuzz.config;
 
-
-import jakarta.servlet.Filter;
-import lombok.RequiredArgsConstructor;
-import lucky.seven.kanbanbuzz.entity.User;
-import lucky.seven.kanbanbuzz.repository.UserRepository;
-import lucky.seven.kanbanbuzz.security.*;
-import lucky.seven.kanbanbuzz.service.UserService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +13,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import jakarta.servlet.Filter;
+import lucky.seven.kanbanbuzz.repository.UserRepository;
+import lucky.seven.kanbanbuzz.security.AuthenticationFilter;
+import lucky.seven.kanbanbuzz.security.AuthorizationFilter;
+import lucky.seven.kanbanbuzz.security.JwtUtil;
+import lucky.seven.kanbanbuzz.security.LogoutFilter;
+import lucky.seven.kanbanbuzz.security.UserDetailsServiceImpl;
+import lucky.seven.kanbanbuzz.service.UserService;
 
 @Configuration
 @EnableWebSecurity
@@ -80,6 +82,7 @@ public class WebSecurityConfig{
                 authorizeHttpRequests
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers("/api/user/login","/api/user/register").permitAll()
+                        .requestMatchers("/", "/index.html","/login.html", "/register.html", "/home.html","board.html").permitAll()
                         .anyRequest().authenticated()
         );
         http.addFilterBefore(logoutFilter(userService,jwtUtil),AuthenticationFilter.class);
