@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Board</title>
+    <style>
+        .card {
+            margin: 10px;
+        }
+
+        .kanban-column {
+            background-color: #f4f4f4;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            min-height: 200px;
+            position: relative;
+        }
+
+        .add-card-btn {
+            background-color: #2ECB82;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        .btn-primary, .nav-link-custom {
+            background-color: #2ECB82 !important;
+            border-color: #2ECB82 !important;
+        }
+
+        .btn-smaller {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 2px solid #f1f1f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #000000 !important;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-link-custom {
+            background-color: #2ECB82;
+            color: #ffffff !important;
+            border-radius: 5px;
+            padding: 10px 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        #commentsList {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="common-header"></div>
+
+<nav class="navbar navbar-custom">
+    <a class="navbar-brand" href="#">KanbanBuzz</a>
+    <div class="nav-links">
+        <a class="nav-link nav-link-custom" href="/home.html">보드 보기</a>
+        <button class="btn nav-link-custom" data-toggle="modal" data-target="#editBoardModal">보드 수정</button>
+        <button class="btn nav-link-custom" data-toggle="modal" data-target="#deleteBoardModal">보드 삭제</button>
+        <button class="btn nav-link-custom" data-toggle="modal" data-target="#addColumnModal">컬럼 추가</button>
+        <button class="btn nav-link-custom" data-toggle="modal" data-target="#inviteModal">초대하기</button>
+        <div class="nav-link nav-link-custom" id="logoutBtn">로그아웃</div>
+    </div>
+</nav>
+
+<!-- Invite Modal -->
+<div class="modal fade" id="inviteModal" tabindex="-1" role="dialog" aria-labelledby="inviteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inviteModalLabel">새로운 사람 초대</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="inviteForm">
+                    <div class="form-group">
+                        <label for="userEmail">초대할 사람의 이메일</label>
+                        <input type="email" class="form-control" id="userEmail" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">초대</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Board Modal -->
+<div class="modal fade" id="editBoardModal" tabindex="-1" role="dialog" aria-labelledby="editBoardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBoardModalLabel">보드 수정</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editBoardForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editBoardName">보드 이름</label>
+                        <input type="text" class="form-control" id="editBoardName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editBoardBio">보드 설명</label>
+                        <textarea class="form-control" id="editBoardBio" name="bio"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Board Confirmation Modal -->
+<div class="modal fade" id="deleteBoardModal" tabindex="-1" role="dialog" aria-labelledby="deleteBoardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBoardModalLabel">보드 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                정말 이 보드를 삭제하시겠습니까?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-smaller" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger btn-smaller" id="confirmDeleteBoardBtn">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Column Modal -->
+<div class="modal fade" id="addColumnModal" tabindex="-1" role="dialog" aria-labelledby="addColumnModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addColumnModalLabel">컬럼 추가</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addColumnForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="addColumnName">컬럼 이름</label>
+                        <input type="text" class="form-control" id="addColumnName" name="statusName" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <h1 class="mt-5" id="boardName">Board Name</h1>
+    <p id="boardBio">Board Bio</p>
+    <div class="form-group">
+        <select id="sortType" class="form-control" style="width: 200px;">
+            <option value="column">상태별 보기</option>
+            <option value="user">담당자별 보기</option>
+            <option value="all">전체 보기</option>
+        </select>
+    </div>
+    <div id="kanban-board" class="row">
+        <!-- Columns and cards will be dynamically added here -->
+    </div>
+</div>
+
+<!-- Add Card Modal -->
+<div class="modal fade" id="addCardModal" tabindex="-1" role="dialog" aria-labelledby="addCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCardModalLabel">Add Card</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addCardForm">
+                <div class="modal-body">
+                    <input type="hidden" id="cardColumnId" name="columnId">
+                    <div class="form-group">
+                        <label for="cardTitle">Title</label>
+                        <input type="text" class="form-control" id="cardTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardContents">Contents</label>
+                        <textarea class="form-control" id="cardContents" name="contents"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="cardEndDate">End Date</label>
+                        <input type="date" class="form-control" id="cardEndDate" name="endDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Column Confirmation Modal -->
+<div class="modal fade" id="deleteColumnModal" tabindex="-1" role="dialog" aria-labelledby="deleteColumnModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteColumnModalLabel">컬럼 삭제</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                정말 이 컬럼을 삭제하시겠습니까?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-smaller" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger btn-smaller" id="confirmDeleteColumnBtn">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Card Modal -->
+<div class="modal fade" id="viewCardModal" tabindex="-1" role="dialog" aria-labelledby="viewCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewCardModalLabel">Card Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5 id="viewCardTitle"></h5>
+                <p><strong>완료 날짜: </strong><span id="viewCardEndDate"></span></p>
+                <p><strong>내용: </strong><span id="viewCardContents"></span></p>
+                <p><strong>담당자: </strong><span id="viewCardUser"></span></p>
+                <div>
+                    <h6>댓글</h6>
+                    <div id="commentsList"></div>
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-secondary btn-sm" id="prevCommentsBtn">이전</button>
+                        <button class="btn btn-secondary btn-sm" id="nextCommentsBtn">다음</button>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label for="newComment">새 댓글</label>
+                        <textarea class="form-control" id="newComment"></textarea>
+                    </div>
+                    <button class="btn btn-primary" id="addCommentBtn">댓글 추가</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary btn-smaller" id="editCardBtn">수정</button>
+                <button type="button" class="btn btn-danger btn-smaller" id="deleteCardBtn">삭제</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Card Modal -->
+<div class="modal fade" id="editCardModal" tabindex="-1" role="dialog" aria-labelledby="editCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCardModalLabel">Edit Card</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editCardForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editCardId">
+                    <div class="form-group">
+                        <label for="editCardTitle">Title</label>
+                        <input type="text" class="form-control" id="editCardTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCardContents">Contents</label>
+                        <textarea class="form-control" id="editCardContents" name="contents"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCardEndDate">End Date</label>
+                        <input type="date" class="form-control" id="editCardEndDate" name="endDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.10.2/Sortable.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Load common header
+        $('#common-header').load('header.html');
+
+        var accessToken = localStorage.getItem('Authorization');
+        if (!accessToken) {
+            window.location.href = '/login.html'; // 토큰이 없으면 로그인 페이지로 리디렉션
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const boardId = urlParams.get('boardId');
+        let sortType = 'column'; // default sortType
+        let columnIdToDelete = null; // Variable to store the column ID to delete
+
+        // Function to fetch and display board details
+        function fetchAndDisplayBoardDetails() {
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        const board = data.data;
+                        $('#boardName').text(board.name);
+                        $('#boardBio').text(board.bio);
+                    } else {
+                        alert('Failed to fetch board details: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching board details:', error);
+                    alert('Error fetching board details: ' + error.message);
+                });
+        }
+
+        // Attach click event to edit board button to populate the modal with board details
+        $('button[data-target="#editBoardModal"]').on('click', function () {
+            fetchAndPopulateBoardDetails(boardId);
+        });
+
+
+        // Fetch and display cards
+        function fetchAndDisplayCards() {
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards?sort=${sortType}`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.status === 403) {
+                        window.location.href = '/login.html'; // 권한이 없으면 로그인 페이지로 리디렉션
+                        return;
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data) {
+                        throw new Error('No data received');
+                    }
+                    console.log(data); // 응답 데이터 출력
+                    const cardsData = data.data || []; // data가 정의되지 않은 경우 빈 배열 사용
+                    const kanbanBoard = $('#kanban-board');
+                    kanbanBoard.empty(); // Clear previous columns and cards
+
+                    if (sortType === 'column') {
+                        // sort columns by sortIndex
+                        cardsData.sort((a, b) => a.sortIndex - b.sortIndex);
+
+                        cardsData.forEach(column => {
+                            const columnElement = `
+            <div class="col-md-4">
+                <div class="kanban-column" data-column-id="${column.sortId}">
+                    <h3>${column.sortName}</h3>
+                    <button class="btn btn-smaller delete-column-btn" data-column-id="${column.sortId}">삭제</button>
+                    <div class="kanban-cards">
+                        ${column.cards.map(card => `
+                            <div class="card" data-card-id="${card.cardId}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${card.title}</h5>
+                                    <p class="card-text">담당자 : ${card.user}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="btn btn-primary add-card-btn" data-column-id="${column.sortId}">+</button>
+                </div>
+            </div>
+            `;
+                            kanbanBoard.append(columnElement);
+                        });
+
+                        // Attach click event to add card buttons
+                        $('.add-card-btn').on('click', function () {
+                            const columnId = $(this).data('column-id');
+                            $('#cardColumnId').val(columnId);
+                            $('#addCardModal').modal('show');
+                        });
+
+                        // Attach click event to cards
+                        $('.card').on('click', function () {
+                            const cardId = $(this).data('card-id');
+                            viewCard(cardId);
+                        });
+
+                        // Attach click event to delete column buttons
+                        $('.delete-column-btn').on('click', function () {
+                            columnIdToDelete = $(this).data('column-id');
+                            $('#deleteColumnModal').modal('show');
+                        });
+
+                        // Initialize Sortable for columns
+                        new Sortable(kanbanBoard[0], {
+                            animation: 150,
+                            onEnd: function (evt) {
+                                const columnOrder = Array.from(kanbanBoard.children()).map(column => $(column).find('.kanban-column').data('column-id'));
+                                reorderColumns(columnOrder);
+                            }
+                        });
+
+                        // Initialize Sortable for cards
+                        $('.kanban-column').each(function() {
+                            const columnId = $(this).data('column-id');
+                            new Sortable($(this).find('.kanban-cards')[0], {
+                                group: 'shared',
+                                animation: 150,
+                                onEnd: function (evt) {
+                                    const cardId = $(evt.item).data('card-id');
+                                    const newColumnId = $(evt.to).closest('.kanban-column').data('column-id');
+                                    updateCardColumn(cardId, newColumnId);
+                                }
+                            });
+                        });
+
+                    } else if (sortType === 'user') {
+                        cardsData.forEach(user => {
+                            if (user.cards.length > 0) { // Check if user has cards
+                                const userElement = `
+                <div class="col-md-4">
+                    <div class="kanban-column" data-user-id="${user.sortId}">
+                        <h3>${user.sortName}</h3>
+                        <div class="kanban-cards">
+                            ${user.cards.map(card => `
+                                <div class="card" data-card-id="${card.cardId}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${card.title}</h5>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                `;
+                                kanbanBoard.append(userElement);
+                            }
+                        });
+
+                        // Attach click event to cards
+                        $('.card').on('click', function () {
+                            const cardId = $(this).data('card-id');
+                            viewCard(cardId);
+                        });
+
+                    } else { // sortType === 'all'
+                        cardsData.forEach(column => {
+                            column.cards.forEach(card => {
+                                const cardElement = `
+                <div class="col-md-4">
+                    <div class="card" data-card-id="${card.cardId}">
+                        <div class="card-body">
+                            <h5 class="card-title">${card.title}</h5>
+                            <p class="card-text">담당자 : ${card.user}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+                                kanbanBoard.append(cardElement);
+                            });
+                        });
+
+                        // Attach click event to cards
+                        $('.card').on('click', function () {
+                            const cardId = $(this).data('card-id');
+                            viewCard(cardId);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching cards:', error);
+                    alert('Error fetching cards: ' + error.message);
+                });
+        }
+
+        // Function to reorder columns
+        function reorderColumns(columnOrder) {
+            const urlParams = new URLSearchParams();
+            columnOrder.forEach(id => {
+                urlParams.append('id[]', id);
+            });
+
+            fetch(`http://localhost:8080/api/boards/${boardId}/columns/reorder`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: urlParams.toString()
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        alert('Columns reordered successfully.');
+                    } else {
+                        alert('Failed to reorder columns: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error reordering columns:', error);
+                    alert('Error reordering columns: ' + error.message);
+                });
+        }
+
+        // Function to add a new card
+        $('#addCardForm').on('submit', function (e) {
+            e.preventDefault();
+            const columnId = $('#cardColumnId').val();
+            const title = $('#cardTitle').val();
+            const contents = $('#cardContents').val();
+            const endDate = $('#cardEndDate').val();
+
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({columnId, title, contents, endDate})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 201) {
+                        $('#addCardModal').modal('hide');
+                        fetchAndDisplayCards(); // Refresh the board after adding a card
+                    } else {
+                        alert('Failed to add card: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding card:', error);
+                    alert('Error adding card: ' + error.message);
+                });
+        });
+
+        // Add event listener for when the add card modal is shown
+        $('#addCardModal').on('show.bs.modal', function () {
+            // Clear the input fields
+            $('#cardTitle').val('');
+            $('#cardContents').val('');
+            $('#cardEndDate').val('');
+        });
+
+        // Attach click event to add card buttons
+        $('.add-card-btn').on('click', function () {
+            const columnId = $(this).data('column-id');
+            $('#cardColumnId').val(columnId);
+            $('#addCardModal').modal('show');
+
+            // Clear the input fields
+            $('#cardTitle').val('');
+            $('#cardContents').val('');
+            $('#cardEndDate').val('');
+        });
+
+        // Function to add a new column
+        $('#addColumnForm').on('submit', function (e) {
+            e.preventDefault();
+            const statusName = $('#addColumnName').val();
+
+            fetch(`http://localhost:8080/api/boards/${boardId}/columns`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({statusName})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 201) {
+                        $('#addColumnModal').modal('hide');
+                        fetchAndDisplayCards(); // Refresh the board after adding a column
+                    } else {
+                        alert('Failed to add column: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding column:', error);
+                    alert('Error adding column: ' + error.message);
+                });
+        });
+
+        // Function to delete a column
+        $('#confirmDeleteColumnBtn').on('click', function () {
+            fetch(`http://localhost:8080/api/boards/${boardId}/columns/${columnIdToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        $('#deleteColumnModal').modal('hide');
+                        fetchAndDisplayCards(); // Refresh the board after deleting a column
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete column: ' + data.message);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting column:', error);
+                    alert('Error deleting column: ' + error.message);
+                });
+        });
+
+        let currentCommentPage = 0; // Current comment page
+        let totalCommentPages = 0; // Total comment pages
+
+// Function to fetch comments for a card
+        function fetchComments(cardId, page = 0) {
+            fetch(`http://localhost:8080/api/cards/${cardId}/comments?page=${page}&size=10`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200 || data.message === '댓글 조회 완료') {
+                        const comments = Array.isArray(data.data.content) ? data.data.content : []; // Ensure comments is an array
+                        const commentsList = $('#commentsList');
+                        commentsList.empty(); // Clear previous comments
+                        comments.forEach(comment => {
+                            const commentElement = `<p>${comment.contents} <small>(${comment.createdAt})</small></p>`;
+                            commentsList.append(commentElement);
+                        });
+
+                        // Update pagination variables
+                        currentCommentPage = data.data.number;
+                        totalCommentPages = data.data.totalPages;
+
+                        // Update button states
+                        $('#prevCommentsBtn').prop('disabled', currentCommentPage <= 0);
+                        $('#nextCommentsBtn').prop('disabled', currentCommentPage >= totalCommentPages - 1);
+                    } else {
+                        alert('Failed to fetch comments: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching comments:', error);
+                    alert('Error fetching comments: ' + error.message);
+                });
+        }
+
+// Attach click event to view card button
+        $('.card').on('click', function () {
+            const cardId = $(this).data('card-id');
+            viewCard(cardId);
+        });
+
+        // Function to add a comment to a card
+        function addComment(cardId, commentContent) {
+            fetch(`http://localhost:8080/api/cards/${cardId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({contents: commentContent})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 201) {
+                        $('#newComment').val(''); // Clear the comment input
+                        fetchComments(cardId); // Refresh comments
+                    } else {
+                        alert('Failed to add comment: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding comment:', error);
+                    alert('Error adding comment: ' + error.message);
+                });
+        }
+
+        // Function to update card's column
+        function updateCardColumn(cardId, newColumnId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ columnId: newColumnId })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        fetchAndDisplayCards(); // Refresh the board after updating card's column
+                    } else {
+                        alert('Failed to update card column: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating card column:', error);
+                    alert('Error updating card column: ' + error.message);
+                });
+        }
+
+        // Function to view a card's details
+        function viewCard(cardId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        const card = data.data;
+                        $('#viewCardTitle').text(card.title);
+                        $('#viewCardEndDate').text(card.endDate || 'N/A');
+                        $('#viewCardContents').text(card.contents || 'No contents');
+                        $('#viewCardUser').text(card.user);
+                        $('#viewCardModal').modal('show');
+
+                        // Fetch and display comments
+                        fetchComments(cardId);
+
+                        // Attach click event to edit card button
+                        $('#editCardBtn').off('click').on('click', function () {
+                            $('#editCardId').val(cardId);
+                            $('#editCardTitle').val(card.title);
+                            $('#editCardContents').val(card.contents);
+                            $('#editCardEndDate').val(card.endDate);
+                            $('#viewCardModal').modal('hide');
+                            $('#editCardModal').modal('show');
+                            populateColumnOptions(card.columnId); // Populate column options
+                        });
+
+                        // Attach click event to delete card button
+                        $('#deleteCardBtn').off('click').on('click', function () {
+                            const confirmDelete = confirm('정말 이 카드를 삭제하시겠습니까?');
+                            if (confirmDelete) {
+                                deleteCard(cardId);
+                            }
+                        });
+
+                        // Attach click event to add comment button
+                        $('#addCommentBtn').off('click').on('click', function () {
+                            const commentContent = $('#newComment').val();
+                            addComment(cardId, commentContent);
+                        });
+
+                        // Attach click event to pagination buttons
+                        $('#prevCommentsBtn').off('click').on('click', function () {
+                            if (currentCommentPage > 0) {
+                                fetchComments(cardId, currentCommentPage - 1);
+                            }
+                        });
+
+                        $('#nextCommentsBtn').off('click').on('click', function () {
+                            if (currentCommentPage < totalCommentPages - 1) {
+                                fetchComments(cardId, currentCommentPage + 1);
+                            }
+                        });
+
+                    } else {
+                        alert('Failed to fetch card details: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching card details:', error);
+                    alert('Error fetching card details: ' + error.message);
+                });
+        }
+
+        // Function to delete a card
+        function deleteCard(cardId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        $('#viewCardModal').modal('hide');
+                        fetchAndDisplayCards(); // Refresh the board after deleting a card
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete card: ' + data.message);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting card:', error);
+                    alert('Error deleting card: ' + error.message);
+                });
+        }
+
+        // Function to fetch and populate board details in the edit modal
+        function fetchAndPopulateBoardDetails(boardId) {
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        const board = data.data;
+                        $('#editBoardName').val(board.name);
+                        $('#editBoardBio').val(board.bio);
+                    } else {
+                        alert('Failed to fetch board details: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching board details:', error);
+                    alert('Error fetching board details: ' + error.message);
+                });
+        }
+
+        // Function to handle board editing
+        $('#editBoardForm').on('submit', function (e) {
+            e.preventDefault();
+            const name = $('#editBoardName').val();
+            const bio = $('#editBoardBio').val();
+
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({name, bio})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        $('#editBoardModal').modal('hide');
+                        fetchAndDisplayBoardDetails(); // Refresh the board details after editing
+                    } else {
+                        alert('Failed to edit board: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error editing board:', error);
+                    alert('Error editing board: ' + error.message);
+                });
+        });
+
+// Attach click event to edit board button to populate the modal with board details
+        $('button[data-target="#editBoardModal"]').on('click', function () {
+            fetchAndPopulateBoardDetails(boardId);
+        });
+
+        // Function to delete a board
+        $('#confirmDeleteBoardBtn').on('click', function () {
+            fetch(`http://localhost:8080/api/boards/${boardId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        $('#deleteBoardModal').modal('hide');
+                        window.location.href = '/home.html'; // Redirect to home after deleting the board
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete board: ' + data.message);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting board:', error);
+                    alert('Error deleting board: ' + error.message);
+                });
+        });
+
+        // Function to handle card editing
+        $('#editCardForm').on('submit', function (e) {
+            e.preventDefault();
+            const cardId = $('#editCardId').val();
+            const title = $('#editCardTitle').val();
+            const contents = $('#editCardContents').val();
+            const endDate = $('#editCardEndDate').val();
+
+            fetch(`http://localhost:8080/api/boards/${boardId}/cards/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({title, contents, endDate})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        $('#editCardModal').modal('hide');
+                        fetchAndDisplayCards(); // Refresh the board after editing a card
+                    } else {
+                        alert('Failed to edit card: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error editing card:', error);
+                    alert('Error editing card: ' + error.message);
+                });
+        });
+
+        // Function to handle user invitation
+        $('#inviteForm').on('submit', function (e) {
+            e.preventDefault();
+            const userEmail = $('#userEmail').val();
+            inviteUser(userEmail);
+        });
+
+        function inviteUser(userEmail) {
+            fetch(`http://localhost:8080/api/boards/${boardId}/invitation?userEmail=${userEmail}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.statusCode === 200) {
+                        alert('사용자를 성공적으로 초대했습니다.');
+                        $('#inviteModal').modal('hide');
+                        $('#inviteForm')[0].reset(); // Reset the form after successful invitation
+                    } else {
+                        alert('사용자 초대 실패: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error inviting user:', error);
+                    alert('사용자 초대 중 오류가 발생했습니다: ' + error.message);
+                });
+        }
+
+        // Handle logout
+        $('#logoutBtn').on('click', function () {
+            fetch('http://localhost:8080/api/user/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': accessToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        localStorage.removeItem('Authorization');
+                        alert('로그아웃 되었습니다.');
+                        window.location.href = '/login.html';
+                    } else {
+                        alert('로그아웃 실패: ' + response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error logging out:', error);
+                    alert('Error logging out: ' + error.message);
+                });
+        });
+
+        // Initial fetch and display
+        fetchAndDisplayBoardDetails();
+        fetchAndDisplayCards();
+
+        // Sort type change event
+        $('#sortType').change(function () {
+            sortType = $(this).val();
+            fetchAndDisplayCards();
+        });
+    });
+</script>
+</body>
+</html>

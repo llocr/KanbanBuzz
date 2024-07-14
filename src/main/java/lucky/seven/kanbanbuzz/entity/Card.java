@@ -14,6 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +23,8 @@ import lombok.NoArgsConstructor;
 @Getter
 @Table(name = "cards")
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class Card extends Timestamped {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +40,7 @@ public class Card extends Timestamped {
 	
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "user_id")
-	private User worker;
+	private User user;
 	
 	@jakarta.persistence.Column(nullable = false)
 	private String title;
