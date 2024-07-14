@@ -58,8 +58,9 @@ public class ColumnService {
 
         checkUser(user);
 
-        columnRepository.findByIdAndBoardId(columnId, boardId).orElseThrow(() ->
-                new UserException(ErrorType.INVALID_COLUMN));
+        if(!columnRepository.existsByIdAndBoardId(columnId, boardId)) {
+            throw new UserException(ErrorType.INVALID_COLUMN);
+        }
 
         columnRepository.deleteById(columnId);
     }

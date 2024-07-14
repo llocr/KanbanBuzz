@@ -11,7 +11,9 @@ import java.util.Set;
 
 @Entity
 @Getter
-@Table(name = "columns")
+@Table(name = "columns", indexes = {
+		@Index(name = "multiIndex", columnList = "id, board_id")
+})
 @NoArgsConstructor
 public class Column {
 	@Id
@@ -29,6 +31,8 @@ public class Column {
 	private Set<Card> cards = new HashSet<>();
 
 	private Long sorting;
+
+
 
 	@Builder
 	public Column(String statusName, Board board, Set<Card> cards, Long sorting) {

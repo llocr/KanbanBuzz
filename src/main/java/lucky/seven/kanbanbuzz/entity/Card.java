@@ -1,5 +1,6 @@
 package lucky.seven.kanbanbuzz.entity;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,6 +41,7 @@ public class Card extends Timestamped {
 	@jakarta.persistence.Column(nullable = false)
 	private String title;
 	private String contents;
+	private LocalDate endDate;
 	
 	// 카드에 달린 댓글
 	@OneToMany(mappedBy = "card", cascade = CascadeType.ALL, orphanRemoval = true)
