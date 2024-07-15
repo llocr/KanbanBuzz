@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,7 @@ public class CardService {
 	private final ColumnRepository columnRepository;
 
 	//모든 카드 조회
+	@Cacheable(value = "cards", key = "#boardId + '-' + #sort + '-' + #user.id")
 	public List<SortWithCardDto> findAllCards(Long boardId, String sort, User user) {
 		//user가 board에 속한 게 맞는지 확인
 		checkUserBoardValidation(boardId, user);
@@ -96,6 +99,7 @@ public class CardService {
 	}
 	
 	//카드 저장
+	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public Long saveCard(Long boardId, CardRequestDto requestDto, User user) {
 		Board board = checkUserBoardValidation(boardId, user);
@@ -122,6 +126,7 @@ public class CardService {
 	}
 	
 	//카드 수정
+	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public CardDetailResponseDto updateCard(Long boardId, Long cardId, CardUpdateDto requestDto, User user) {
 		//카드가 존재하는지 확인
@@ -158,6 +163,7 @@ public class CardService {
 	}
 	
 	//카드 삭제
+	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public Long deleteCard(Long boardId, Long cardId, User user) {
 		Card card = getSingleCard(boardId, cardId);
