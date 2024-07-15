@@ -14,6 +14,7 @@ import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.repository.CardRepository;
 import lucky.seven.kanbanbuzz.repository.CommentRepositroy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.List;
 public class CommentService {
     private final CommentRepositroy commentRepositroy;
     private final CardRepository cardRepository;
+    @CacheEvict(value = "comments", allEntries = true)
     @Transactional
     public Long createComment(User user, Long cardId, CommentRequestDto requestDto){
         Card card = cardRepository.findById(cardId).orElseThrow(()-> new CardException(ErrorType.NOT_FOUND_CARD));
@@ -38,6 +40,7 @@ public class CommentService {
         commentRepositroy.save(comment);
         return comment.getId();
     }
+
 
     @Transactional
     public Page<CommentResponseDto> getComments(User user, Long cardId, Pageable pageable){
