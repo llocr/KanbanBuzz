@@ -38,6 +38,7 @@ public class BoardService {
         checkRole(user);
         Board board = Board.builder().requestDto(request).build();
         boardRepository.save(board);
+        userBoardRepository.save(new UserBoard(user, board));
 
         return board.getId();
     }
