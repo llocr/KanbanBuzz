@@ -18,39 +18,39 @@ import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(indexes = {
-		@Index(name = "idx_board_name", columnList = "name")
+@Table(name = "boards", indexes = {
+        @Index(name = "idx_board_name", columnList = "name")
 })
 public class Board extends Timestamped {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String name;
+    private String name;
 
-	private String bio;
+    private String bio;
 
-	// 보드에 속한 유저
-	@OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<UserBoard> userBoards = new HashSet<>();
+    // 보드에 속한 유저
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserBoard> userBoards = new HashSet<>();
 
-	// 보드에 속한 컬럼
-	@OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<Column> columns = new HashSet<>();
+    // 보드에 속한 컬럼
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Column> columns = new HashSet<>();
 
-	//보드에 속한 카드
-	@OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<Card> cards = new HashSet<>();
+    //보드에 속한 카드
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Card> cards = new HashSet<>();
 
-	@Builder
-	public Board(BoardRequestDto requestDto) {
-		this.name = requestDto.getName();
-		this.bio = requestDto.getBio();
-	}
+    @Builder
+    public Board(BoardRequestDto requestDto) {
+        this.name = requestDto.getName();
+        this.bio = requestDto.getBio();
+    }
 
-	public void update(BoardRequestDto requestDto) {
-		this.name = requestDto.getName();
-		this.bio = requestDto.getBio();
-	}
+    public void update(BoardRequestDto requestDto) {
+        this.name = requestDto.getName();
+        this.bio = requestDto.getBio();
+    }
 }
