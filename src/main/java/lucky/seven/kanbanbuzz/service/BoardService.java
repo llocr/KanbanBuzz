@@ -2,6 +2,13 @@ package lucky.seven.kanbanbuzz.service;
 
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lucky.seven.kanbanbuzz.dto.BoardRequestDto;
 import lucky.seven.kanbanbuzz.dto.BoardResponseDto;
@@ -14,8 +21,6 @@ import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
 import lucky.seven.kanbanbuzz.repository.UserRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +30,7 @@ public class BoardService {
     private final UserBoardRepository userBoardRepository;
     private final UserRepository userRepository;
 
-
+    @Cacheable(value = "boards")
     public List<BoardResponseDto> findAll() {
 
         return boardRepository.findAll()
@@ -34,6 +39,7 @@ public class BoardService {
 
     }
 
+    @CacheEvict(value = "boards", allEntries = true)
     public Long createBoard(User user, BoardRequestDto request) {
         checkRole(user);
         Board board = Board.builder().requestDto(request).build();
@@ -48,6 +54,7 @@ public class BoardService {
         return BoardResponseDto.from(board);
     }
 
+    @CachePut(value = "boards", key = "#id")
     @Transactional
     public BoardResponseDto updateBoard(User user, Long id,
             BoardRequestDto requestDto) {
@@ -57,6 +64,7 @@ public class BoardService {
         return BoardResponseDto.from(board);
     }
 
+    @CacheEvict(value = "boards", key = "#id")
     @Transactional
     public Long deleteBoard(User user, Long id) {
         checkRole(user);
