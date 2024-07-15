@@ -3,10 +3,11 @@ package lucky.seven.kanbanbuzz.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lucky.seven.kanbanbuzz.entity.Board;
 
 @Getter
-@Builder
+@NoArgsConstructor
 public class BoardRequestDto {
 
     @NotNull(message = "제목을 입력해주세요.")
@@ -14,8 +15,13 @@ public class BoardRequestDto {
 
     @NotNull(message = "소개글을 간단하게 작성하여주세요!")
     private String bio;
-
-    // Builder 패턴 사용
+    
+    @Builder
+    public BoardRequestDto(String name, String bio) {
+        this.name = name;
+        this.bio = bio;
+    }
+    
     public static BoardResponseDto from(Board board) {
         return BoardResponseDto.builder()
                 .name(board.getName())
