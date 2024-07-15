@@ -2,9 +2,7 @@ package lucky.seven.kanbanbuzz.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -48,9 +46,9 @@ public class CardService {
 
 		switch (sort) {
 			case "column":
-				return groupCardsByColumn(boardId, cardList);
+				return groupCardsByColumn(cardList);
 			case "user":
-				return groupCardsByUser(boardId, cardList);
+				return groupCardsByUser(cardList);
 			case "all":
 				List<CardSimpleResponseDto> all = cardList.stream().map(CardSimpleResponseDto::new).collect(Collectors.toList());
 				return List.of(new SortWithCardDto(0L, sort, 0L, all));
@@ -60,41 +58,30 @@ public class CardService {
 	}
 
 	//유저별로 카드 그룹화
-	private List<SortWithCardDto> groupCardsByUser(Long boardId, List<Card> cardList) {
-		Set<UserBoard> userBoards = userBoardRepository.findByBoardId(boardId);
-
-		// 카드 목록을 유저별로 그룹화
-		Map<String, List<CardSimpleResponseDto>> cardsByUser = cardList.stream()
-			.map(CardSimpleResponseDto::new)
-			.collect(Collectors.groupingBy(CardSimpleResponseDto::getUser));
-
-		// 유저별로 그룹화된 카드 목록을 ColumnWithCardsDto 객체로 변환하여 반환
-		return userBoards.stream()
-			.map(userBoard -> new SortWithCardDto(
-				userBoard.getUser().getId(),
-				userBoard.getUser().getName(),
-				userBoard.getUser().getId(),
-				cardsByUser.getOrDefault(userBoard.getUser().getName(), List.of())
+	private List<SortWithCardDto> groupCardsByUser(List<Card> cardList) {
+		return cardList.stream()
+			.collect(Collectors.groupingBy(card -> card.getUser().getName()))
+			.entrySet().stream()
+			.map(entry -> new SortWithCardDto(
+				entry.getValue().get(0).getUser().getId(),
+				entry.getValue().get(0).getUser().getName(),
+				0L,
+				entry.getValue().stream().map(CardSimpleResponseDto::new).collect(Collectors.toList())
 			))
 			.collect(Collectors.toList());
 	}
 
 	//컬럼별로 카드 그룹화
-	private List<SortWithCardDto> groupCardsByColumn(Long boardId, List<Card> cardList) {
-		Set<Column> columns = columnRepository.findByBoardId(boardId);
-
-		// 카드 목록을 컬럼별로 그룹화
-		Map<Long, List<CardSimpleResponseDto>> cardsByColumn = cardList.stream()
-			.map(CardSimpleResponseDto::new)
-			.collect(Collectors.groupingBy(CardSimpleResponseDto::getColumnId));
-
-		// 컬럼별로 그룹화된 카드 목록을 ColumnWithCardsDto 객체로 변환하여 반환
-		return columns.stream()
-			.map(column -> new SortWithCardDto(
-				column.getId(),
-				column.getStatusName(),
-				column.getSorting(),
-				cardsByColumn.getOrDefault(column.getId(), List.of())
+	private List<SortWithCardDto> groupCardsByColumn(List<Card> cardList) {
+		// 컬럼별로 그룹화된 카드 목록을 SortWithCardDto 객체로 변환하여 반환
+		return cardList.stream()
+			.collect(Collectors.groupingBy(card -> card.getColumn().getId()))
+			.entrySet().stream()
+			.map(entry -> new SortWithCardDto(
+				entry.getKey(),
+				entry.getValue().get(0).getColumn().getStatusName(),
+				entry.getValue().get(0).getColumn().getSorting(),
+				entry.getValue().stream().map(CardSimpleResponseDto::new).collect(Collectors.toList())
 			))
 			.collect(Collectors.toList());
 	}
