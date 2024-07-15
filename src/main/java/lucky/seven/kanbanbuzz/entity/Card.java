@@ -10,6 +10,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -21,10 +22,14 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "cards")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
+@Table(name = "cards", indexes = {
+	@Index(name = "idx_cards_board_id_column_id_user_id", columnList = "board_id, column_id, user_id"),
+	@Index(name = "idx_cards_board_id", columnList = "id, board_id")
+})
+
 public class Card extends Timestamped {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
