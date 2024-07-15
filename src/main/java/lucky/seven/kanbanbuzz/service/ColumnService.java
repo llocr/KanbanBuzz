@@ -2,6 +2,7 @@ package lucky.seven.kanbanbuzz.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lucky.seven.kanbanbuzz.dto.CardRequestDto;
 import lucky.seven.kanbanbuzz.dto.ColumnRequestDto;
 import lucky.seven.kanbanbuzz.dto.ColumnResponseDto;
 import lucky.seven.kanbanbuzz.entity.Board;
@@ -23,6 +24,7 @@ public class ColumnService {
 
     private final ColumnRepository columnRepository;
     private final BoardRepository boardRepository;
+    private final CardService cardService;
 
     /**
      * 컬럼 생성
@@ -41,9 +43,11 @@ public class ColumnService {
         }
 
         Long sort = columnRepository.countByBoardId(boardId) + 1L;
-
         Column column = Column.saveColumn(findBoard, requestDto, sort);
         columnRepository.save(column);
+
+        CardRequestDto cardRequestDto = new CardRequestDto(column.getId(), "title", "", "2000-01-01");
+        cardService.saveCard(boardId, cardRequestDto, user);
 
         return ColumnResponseDto.of(column);
     }
@@ -58,8 +62,9 @@ public class ColumnService {
 
         checkUser(user);
 
-        columnRepository.findByIdAndBoardId(columnId, boardId).orElseThrow(() ->
-                new UserException(ErrorType.INVALID_COLUMN));
+        if(!columnRepository.existsByIdAndBoardId(columnId, boardId)) {
+            throw new UserException(ErrorType.INVALID_COLUMN);
+        }
 
         columnRepository.deleteById(columnId);
     }

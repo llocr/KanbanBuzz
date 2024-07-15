@@ -2,9 +2,11 @@ package lucky.seven.kanbanbuzz.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public class CardRequestDto {
 	@NotNull(message = "컬럼을 선택해주세요.")
 	private Long columnId;
