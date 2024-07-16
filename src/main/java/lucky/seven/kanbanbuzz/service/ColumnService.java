@@ -13,6 +13,8 @@ import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
 import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.ColumnRepository;
+
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,7 @@ public class ColumnService {
      * @param boardId
      * @param columnId
      */
+    @CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
     @Transactional
     public void deleteColumn(Long boardId, Long columnId, User user) {
 

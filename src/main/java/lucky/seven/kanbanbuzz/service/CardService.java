@@ -26,6 +26,7 @@ import lucky.seven.kanbanbuzz.exception.CardException;
 import lucky.seven.kanbanbuzz.exception.ColumnException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
+import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.CardRepository;
 import lucky.seven.kanbanbuzz.repository.ColumnRepository;
 import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
@@ -37,12 +38,14 @@ public class CardService {
 	private final CardRepository cardRepository;
 	private final UserBoardRepository userBoardRepository;
 	private final ColumnRepository columnRepository;
-
+	private final BoardRepository boardRepository;
+	
 	//모든 카드 조회
 	@Cacheable(value = "cards", key = "#boardId + '-' + #sort + '-' + #user.id")
 	public List<SortWithCardDto> findAllCards(Long boardId, String sort, User user) {
-		//user가 board에 속한 게 맞는지 확인
-		checkUserBoardValidation(boardId, user);
+		if(isManager(user)) {
+			checkUserBoardValidation(boardId, user);
+		}
 
 		//카드 목록 조회
 		List<Card> cardList = getCards(boardId);
@@ -91,7 +94,9 @@ public class CardService {
 	
 	//카드 단일 조회
 	public CardDetailResponseDto findSingleCard(Long boardId, Long cardId, User user) {
-		checkUserBoardValidation(boardId, user);
+		if (isManager(user)) {
+			checkUserBoardValidation(boardId, user);
+		}
 		
 		Card card = getSingleCard(boardId, cardId);
 		
@@ -102,7 +107,11 @@ public class CardService {
 	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public Long saveCard(Long boardId, CardRequestDto requestDto, User user) {
-		Board board = checkUserBoardValidation(boardId, user);
+		if (isManager(user)) {
+			checkUserBoardValidation(boardId, user);
+		}
+		
+		Board board = getBoard(boardId);
 		Column column = getColumn(boardId, requestDto.getColumnId());
 		
 		Card.CardBuilder cardBuilder = Card.builder()
@@ -133,7 +142,7 @@ public class CardService {
 		Card card = getSingleCard(boardId, cardId);
 		
 		//유저가 작성한 카드가 맞는지 확인
-		if(user.getRole() != UserRole.ROLE_MANAGER) {
+		if(isManager(user)) {
 			checkUserCardValidation(card.getId(), user);
 		}
 		
@@ -168,7 +177,7 @@ public class CardService {
 	public Long deleteCard(Long boardId, Long cardId, User user) {
 		Card card = getSingleCard(boardId, cardId);
 		
-		if(user.getRole() != UserRole.ROLE_MANAGER) {
+		if(isManager(user)) {
 			checkUserCardValidation(card.getId(), user);
 		}
 		
@@ -178,15 +187,19 @@ public class CardService {
 	}
 	
 	//** UTIL **//
+	
+	//유저가 매니저인지 확인
+	private static boolean isManager(User user) {
+		return user.getRole() != UserRole.ROLE_MANAGER;
+	}
 
 	//유저가 보드에 속한 것인지 확인
-	private Board checkUserBoardValidation(Long boardId, User user) {
-		Optional<UserBoard> userBoard = userBoardRepository.findByBoardIdAndUserId(boardId, user.getId());
-		if (userBoard.isEmpty()) {
+	private void checkUserBoardValidation(Long boardId, User user) {
+		boolean check = userBoardRepository.existsByBoardIdAndUserId(boardId, user.getId());
+		
+		if (!check) {
 			throw new UserException(ErrorType.NOT_FOUND_BOARD);
 		}
-
-		return userBoard.get().getBoard();
 	}
 	
 	//카드 존재하는지 확인
@@ -226,5 +239,10 @@ public class CardService {
 		if (card.isEmpty()) {
 			throw new CardException(ErrorType.INVALID_CARD_USER);
 		}
+	}
+	
+	//boardId로 Board 조회
+	private Board getBoard(Long boardId) {
+		return boardRepository.findById(boardId).orElseThrow(() -> new CardException(ErrorType.NOT_FOUND_BOARD));
 	}
 }
