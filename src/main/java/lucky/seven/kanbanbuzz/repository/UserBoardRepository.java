@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import lucky.seven.kanbanbuzz.entity.UserBoard;
 
 public interface UserBoardRepository extends JpaRepository<UserBoard, Long> {
-	Optional<UserBoard> findByBoardIdAndUserId(Long boardId, Long id);
+	boolean existsByBoardIdAndUserId(Long boardId, Long userId);
 	
     @Query("SELECT ub FROM UserBoard ub WHERE ub.user.email = :email AND ub.board.id = :boardId")
     Optional<UserBoard> findByUserEmailAndBoardId(@Param("email") String email, @Param("boardId") Long boardId);

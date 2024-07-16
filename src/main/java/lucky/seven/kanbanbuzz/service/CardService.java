@@ -26,6 +26,7 @@ import lucky.seven.kanbanbuzz.exception.CardException;
 import lucky.seven.kanbanbuzz.exception.ColumnException;
 import lucky.seven.kanbanbuzz.exception.ErrorType;
 import lucky.seven.kanbanbuzz.exception.UserException;
+import lucky.seven.kanbanbuzz.repository.BoardRepository;
 import lucky.seven.kanbanbuzz.repository.CardRepository;
 import lucky.seven.kanbanbuzz.repository.ColumnRepository;
 import lucky.seven.kanbanbuzz.repository.UserBoardRepository;
@@ -37,7 +38,8 @@ public class CardService {
 	private final CardRepository cardRepository;
 	private final UserBoardRepository userBoardRepository;
 	private final ColumnRepository columnRepository;
-
+	private final BoardRepository boardRepository;
+	
 	//모든 카드 조회
 	@Cacheable(value = "cards", key = "#boardId + '-' + #sort + '-' + #user.id")
 	public List<SortWithCardDto> findAllCards(Long boardId, String sort, User user) {
@@ -105,13 +107,12 @@ public class CardService {
 	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public Long saveCard(Long boardId, CardRequestDto requestDto, User user) {
-		Board board = new Board();
-		Column column = new Column();
-		
 		if (isManager(user)) {
-			board = checkUserBoardValidation(boardId, user);
-			column = getColumn(boardId, requestDto.getColumnId());
+			checkUserBoardValidation(boardId, user);
 		}
+		
+		Board board = getBoard(boardId);
+		Column column = getColumn(boardId, requestDto.getColumnId());
 		
 		Card.CardBuilder cardBuilder = Card.builder()
 			.title(requestDto.getTitle())
@@ -187,18 +188,18 @@ public class CardService {
 	
 	//** UTIL **//
 	
+	//유저가 매니저인지 확인
 	private static boolean isManager(User user) {
 		return user.getRole() != UserRole.ROLE_MANAGER;
 	}
 
 	//유저가 보드에 속한 것인지 확인
-	private Board checkUserBoardValidation(Long boardId, User user) {
-		Optional<UserBoard> userBoard = userBoardRepository.findByBoardIdAndUserId(boardId, user.getId());
-		if (userBoard.isEmpty()) {
+	private void checkUserBoardValidation(Long boardId, User user) {
+		boolean check = userBoardRepository.existsByBoardIdAndUserId(boardId, user.getId());
+		
+		if (!check) {
 			throw new UserException(ErrorType.NOT_FOUND_BOARD);
 		}
-
-		return userBoard.get().getBoard();
 	}
 	
 	//카드 존재하는지 확인
@@ -238,5 +239,10 @@ public class CardService {
 		if (card.isEmpty()) {
 			throw new CardException(ErrorType.INVALID_CARD_USER);
 		}
+	}
+	
+	//boardId로 Board 조회
+	private Board getBoard(Long boardId) {
+		return boardRepository.findById(boardId).orElseThrow(() -> new CardException(ErrorType.NOT_FOUND_BOARD));
 	}
 }
