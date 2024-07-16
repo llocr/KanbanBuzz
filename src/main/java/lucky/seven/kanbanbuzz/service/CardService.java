@@ -41,8 +41,9 @@ public class CardService {
 	//모든 카드 조회
 	@Cacheable(value = "cards", key = "#boardId + '-' + #sort + '-' + #user.id")
 	public List<SortWithCardDto> findAllCards(Long boardId, String sort, User user) {
-		//user가 board에 속한 게 맞는지 확인
-		checkUserBoardValidation(boardId, user);
+		if(isManager(user)) {
+			checkUserBoardValidation(boardId, user);
+		}
 
 		//카드 목록 조회
 		List<Card> cardList = getCards(boardId);
@@ -91,7 +92,9 @@ public class CardService {
 	
 	//카드 단일 조회
 	public CardDetailResponseDto findSingleCard(Long boardId, Long cardId, User user) {
-		checkUserBoardValidation(boardId, user);
+		if (isManager(user)) {
+			checkUserBoardValidation(boardId, user);
+		}
 		
 		Card card = getSingleCard(boardId, cardId);
 		
@@ -102,8 +105,13 @@ public class CardService {
 	@CacheEvict(value = "cards", key = "#boardId + '-*'", allEntries = true)
 	@Transactional
 	public Long saveCard(Long boardId, CardRequestDto requestDto, User user) {
-		Board board = checkUserBoardValidation(boardId, user);
-		Column column = getColumn(boardId, requestDto.getColumnId());
+		Board board = new Board();
+		Column column = new Column();
+		
+		if (isManager(user)) {
+			board = checkUserBoardValidation(boardId, user);
+			column = getColumn(boardId, requestDto.getColumnId());
+		}
 		
 		Card.CardBuilder cardBuilder = Card.builder()
 			.title(requestDto.getTitle())
@@ -133,7 +141,7 @@ public class CardService {
 		Card card = getSingleCard(boardId, cardId);
 		
 		//유저가 작성한 카드가 맞는지 확인
-		if(user.getRole() != UserRole.ROLE_MANAGER) {
+		if(isManager(user)) {
 			checkUserCardValidation(card.getId(), user);
 		}
 		
@@ -168,7 +176,7 @@ public class CardService {
 	public Long deleteCard(Long boardId, Long cardId, User user) {
 		Card card = getSingleCard(boardId, cardId);
 		
-		if(user.getRole() != UserRole.ROLE_MANAGER) {
+		if(isManager(user)) {
 			checkUserCardValidation(card.getId(), user);
 		}
 		
@@ -178,6 +186,10 @@ public class CardService {
 	}
 	
 	//** UTIL **//
+	
+	private static boolean isManager(User user) {
+		return user.getRole() != UserRole.ROLE_MANAGER;
+	}
 
 	//유저가 보드에 속한 것인지 확인
 	private Board checkUserBoardValidation(Long boardId, User user) {
